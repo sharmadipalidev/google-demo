@@ -17,7 +17,8 @@
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test-script": "tsx src/server/test.ts"
   },
   "dependencies": {
     "@corsair-dev/cli": "^0.1.19",
