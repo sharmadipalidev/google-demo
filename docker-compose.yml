@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: google-demo-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password} # Replace if needed or load from .env
+      POSTGRES_DB: google-demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    image: node:20
+    container_name: google-demo-app
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-password}@postgres:5432/google-demo
+    command: >
+      bash -c "corepack enable pnpm && pnpm install && pnpm dev --hostname 0.0.0.0"
+    depends_on:
+      - postgres
+
+  studio:
+    image: node:20
+    container_name: google-demo-studio
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "4983:4983"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-password}@postgres:5432/google-demo
+    command: >
+      bash -c "corepack enable pnpm && pnpm install && pnpm run db:studio --host 0.0.0.0"
+    depends_on:
+      - postgres
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: google-demo-ngrok
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: "http app:3000"
+    ports:
+      - "4040:4040"
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:
