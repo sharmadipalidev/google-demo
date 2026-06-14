@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { api } from "@/trpc/react";
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -57,10 +57,121 @@ export default function GmailDashboard() {
     enabled: activeTab === "webhook",
   });
 
+  // ── Calendar View State
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
+
+  const timeMin = useMemo(() => {
+    const d = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+    return d.toISOString();
+  }, [currentMonthDate]);
+
+  const timeMax = useMemo(() => {
+    const d = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0, 23, 59, 59);
+    return d.toISOString();
+  }, [currentMonthDate]);
+
   const calendarQuery = api.calendar.listEvents.useQuery(
-    { maxResults: 15, q: searchQuery || undefined },
+    { maxResults: 100, q: searchQuery || undefined, timeMin, timeMax },
     { enabled: activeTab === "calendar", refetchInterval: 3000 },
   );
+
+  // ── Calendar Grid Logic
+  const calYear = currentMonthDate.getFullYear();
+  const calMonth = currentMonthDate.getMonth();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(calYear, calMonth, 1).getDay();
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const currentMonthName = monthNames[calMonth];
+
+  const handlePrevMonth = () => setCurrentMonthDate(new Date(calYear, calMonth - 1, 1));
+  const handleNextMonth = () => setCurrentMonthDate(new Date(calYear, calMonth + 1, 1));
+  const handleToday = () => setCurrentMonthDate(new Date());
+
+  // ── Event Modal State
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [editingEventData, setEditingEventData] = useState<{ id?: string, summary: string, description: string, start: string, end: string, colorId: string } | null>(null);
+
+  const createEventMutation = api.calendar.createEvent.useMutation({
+    onSuccess: () => {
+      setIsEventModalOpen(false);
+      calendarQuery.refetch();
+      alert("Event created!");
+    },
+    onError: (e) => alert(`Failed to create event: ${e.message}`)
+  });
+
+  const updateEventMutation = api.calendar.updateEvent.useMutation({
+    onSuccess: () => {
+      setIsEventModalOpen(false);
+      calendarQuery.refetch();
+      alert("Event updated!");
+    },
+    onError: (e) => alert(`Failed to update event: ${e.message}`)
+  });
+
+  const deleteEventMutation = api.calendar.deleteEvent.useMutation({
+    onSuccess: () => {
+      setIsEventModalOpen(false);
+      calendarQuery.refetch();
+      alert("Event deleted!");
+    },
+    onError: (e) => alert(`Failed to delete event: ${e.message}`)
+  });
+
+  const handleDeleteEvent = () => {
+    if (!editingEventData?.id) return;
+    if (confirm("Are you sure you want to delete this event?")) {
+      deleteEventMutation.mutate({ id: editingEventData.id });
+    }
+  };
+
+  const openAddEvent = (dateStr?: string) => {
+    const start = dateStr ? `${dateStr}T09:00:00` : new Date().toISOString().slice(0, 16);
+    const end = dateStr ? `${dateStr}T10:00:00` : new Date(Date.now() + 3600000).toISOString().slice(0, 16);
+    setEditingEventData({ summary: "", description: "", start, end, colorId: "1" });
+    setIsEventModalOpen(true);
+  };
+
+  const openEditEvent = (evt: any, e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent triggering the cell click
+    const start = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().slice(0, 16) : `${evt.start?.date}T00:00`;
+    const end = evt.end?.dateTime ? new Date(evt.end.dateTime as string).toISOString().slice(0, 16) : `${evt.end?.date}T00:00`;
+    setEditingEventData({
+      id: evt.id,
+      summary: evt.summary || "",
+      description: evt.description || "",
+      start,
+      end,
+      colorId: evt.colorId || "1"
+    });
+    setIsEventModalOpen(true);
+  };
+
+  const handleEventSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEventData) return;
+    const startIso = new Date(editingEventData.start).toISOString();
+    const endIso = new Date(editingEventData.end).toISOString();
+    if (editingEventData.id) {
+      updateEventMutation.mutate({
+        id: editingEventData.id,
+        summary: editingEventData.summary,
+        description: editingEventData.description,
+        start: startIso,
+        end: endIso,
+        colorId: editingEventData.colorId
+      });
+    } else {
+      createEventMutation.mutate({
+        summary: editingEventData.summary,
+        description: editingEventData.description,
+        start: startIso,
+        end: endIso,
+        colorId: editingEventData.colorId
+      });
+    }
+  };
 
 
 
@@ -413,10 +524,22 @@ export default function GmailDashboard() {
 
         {/* ── Calendar ─────────────────────────────── */}
         {activeTab === "calendar" && (
-          <section className="panel" id="panel-calendar">
-            <div className="panel-header">
-              <h2 className="panel-title">Calendar Events</h2>
-              <div className="search-bar">
+          <section className="panel calendar-panel" id="panel-calendar">
+            <div className="calendar-toolbar">
+              <div className="calendar-toolbar-left">
+                <h2 className="calendar-month-title">{currentMonthName} {calYear}</h2>
+                <div className="calendar-nav-buttons">
+                  <button className="btn-icon" onClick={handlePrevMonth}>
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                  <button className="btn-icon" onClick={handleNextMonth}>
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                  <button className="btn-today" onClick={handleToday}>Today</button>
+                  <button className="btn-send" style={{ padding: '8px 16px', marginLeft: '12px' }} onClick={() => openAddEvent()}>+ Create</button>
+                </div>
+              </div>
+              <div className="search-bar calendar-search">
                 <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
                   <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
                   <path d="M16 16l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -454,43 +577,52 @@ export default function GmailDashboard() {
               </div>
             )}
 
-            {!calendarQuery.data?.authError && calendarQuery.data?.items && calendarQuery.data.items.length > 0 ? (
-              <ul className="message-list">
-                {calendarQuery.data.items.map((event: any) => (
-                  <li key={event.id} className="message-row" id={`event-${event.id}`}>
-                    <div className="msg-avatar">
-                      📅
-                    </div>
-                    <div className="msg-body">
-                      <div className="msg-top-line">
-                        <span className="msg-sender">
-                          {event.creator?.email || "Unknown Creator"}
-                        </span>
-                        <span className="msg-time">{timeAgo(event.created)}</span>
-                      </div>
-                      <div className="msg-subject">
-                        {event.summary || "(No Title)"}
-                      </div>
-                      <p className="msg-snippet">
-                        {event.start?.dateTime ? new Date(event.start.dateTime as string).toLocaleString() : (event.start?.date || "No start date")}{" - "}
-                        {event.end?.dateTime ? new Date(event.end.dateTime as string).toLocaleString() : (event.end?.date || "No end date")}
-                      </p>
-                      {event.status && (
-                        <div className="msg-labels">
-                          <span className="label-chip">{event.status}</span>
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              !calendarQuery.isLoading && !calendarQuery.error && !calendarQuery.data?.authError && (
-                <div className="empty-state">
-                  <span className="empty-icon">📅</span>
-                  <p>No events found</p>
+            {!calendarQuery.isLoading && !calendarQuery.data?.authError && (
+              <div className="calendar-view">
+                <div className="calendar-weekdays">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                    <div key={day} className="calendar-weekday">{day}</div>
+                  ))}
                 </div>
-              )
+                <div className="calendar-grid">
+                  {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                    <div key={`empty-${i}`} className="calendar-cell empty"></div>
+                  ))}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const dateStr = new Date(calYear, calMonth, dayNum).toISOString().split('T')[0];
+                    const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                    
+                    const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
+                      const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
+                      return evtStartStr === dateStr;
+                    }) || [];
+
+                    return (
+                      <div key={dayNum} className={`calendar-cell ${isToday ? 'today' : ''}`} onClick={() => openAddEvent(dateStr)}>
+                        <div className="calendar-cell-header">
+                          <span className={`calendar-day-number ${isToday ? 'active' : ''}`}>{dayNum}</span>
+                        </div>
+                        <div className="calendar-events-container">
+                          {dayEvents.map((evt: any) => (
+                            <div key={evt.id} className={`calendar-event-chip color-${evt.colorId || '1'}`} title={evt.summary} onClick={(e) => openEditEvent(evt, e)}>
+                              {evt.start?.dateTime ? (
+                                <span className="calendar-event-time">
+                                  {new Date(evt.start.dateTime as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              ) : null}
+                              <span className="calendar-event-title">{evt.summary || "(No Title)"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
+                    <div key={`empty-end-${i}`} className="calendar-cell empty"></div>
+                  ))}
+                </div>
+              </div>
             )}
           </section>
         )}
@@ -556,6 +688,58 @@ export default function GmailDashboard() {
           </section>
         )}
       </main>
+
+      {/* ── Event Modal ──────────────────────────────── */}
+      {isEventModalOpen && editingEventData && (
+        <div className="modal-overlay" onClick={() => setIsEventModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">{editingEventData.id ? "Edit Event" : "New Event"}</h2>
+            <form className="compose-form" style={{ maxWidth: '100%', padding: '20px 0 0', border: 'none', background: 'transparent' }} onSubmit={handleEventSubmit}>
+              <div className="form-group">
+                <label>Event Title</label>
+                <input type="text" value={editingEventData.summary} onChange={e => setEditingEventData({...editingEventData, summary: e.target.value})} required autoFocus placeholder="Add title" />
+              </div>
+              <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Start Time</label>
+                  <input type="datetime-local" value={editingEventData.start} onChange={e => setEditingEventData({...editingEventData, start: e.target.value})} required />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>End Time</label>
+                  <input type="datetime-local" value={editingEventData.end} onChange={e => setEditingEventData({...editingEventData, end: e.target.value})} required />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea rows={3} value={editingEventData.description} onChange={e => setEditingEventData({...editingEventData, description: e.target.value})} placeholder="Add description" />
+              </div>
+              <div className="form-group">
+                <label>Color</label>
+                <div className="color-picker">
+                  {["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"].map(c => (
+                    <button key={c} type="button" className={`color-swatch color-${c} ${editingEventData.colorId === c ? 'selected' : ''}`} onClick={() => setEditingEventData({...editingEventData, colorId: c})} />
+                  ))}
+                </div>
+              </div>
+              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                <div>
+                  {editingEventData.id && (
+                    <button type="button" className="btn-back" style={{ color: 'var(--error, #f44336)', marginBottom: 0 }} onClick={handleDeleteEvent} disabled={deleteEventMutation.isPending}>
+                      {deleteEventMutation.isPending ? "Deleting..." : "Delete"}
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button type="button" className="btn-back" style={{ marginBottom: 0 }} onClick={() => setIsEventModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="btn-send" disabled={createEventMutation.isPending || updateEventMutation.isPending || deleteEventMutation.isPending}>
+                    {createEventMutation.isPending || updateEventMutation.isPending ? "Saving..." : "Save Event"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
