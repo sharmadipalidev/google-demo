@@ -25,7 +25,7 @@ function timeAgo(date: string | number | Date | null | undefined): string {
 }
 
 // ─── Tab Types ────────────────────────────────────────────
-type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook";
+type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar";
 
 // ─── Main Component ──────────────────────────────────────
 export default function GmailDashboard() {
@@ -57,6 +57,11 @@ export default function GmailDashboard() {
     enabled: activeTab === "webhook",
   });
 
+  const calendarQuery = api.calendar.listEvents.useQuery(
+    { maxResults: 15, q: searchQuery || undefined },
+    { enabled: activeTab === "calendar", refetchInterval: 3000 },
+  );
+
 
 
   const selectedMessage = api.gmail.getMessage.useQuery(
@@ -79,6 +84,7 @@ export default function GmailDashboard() {
     { key: "labels", label: "Labels", icon: "🏷️" },
     { key: "drafts", label: "Drafts", icon: "📝" },
     { key: "compose", label: "Compose", icon: "✉️" },
+    { key: "calendar", label: "Calendar", icon: "📅" },
     { key: "webhook", label: "Webhooks", icon: "🔔" },
   ];
 
@@ -402,6 +408,90 @@ export default function GmailDashboard() {
                 )}
               </button>
             </form>
+          </section>
+        )}
+
+        {/* ── Calendar ─────────────────────────────── */}
+        {activeTab === "calendar" && (
+          <section className="panel" id="panel-calendar">
+            <div className="panel-header">
+              <h2 className="panel-title">Calendar Events</h2>
+              <div className="search-bar">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16 16l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <input
+                  id="search-calendar-input"
+                  type="text"
+                  placeholder="Search events…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") calendarQuery.refetch();
+                  }}
+                />
+              </div>
+              <button className="btn-refresh" onClick={() => calendarQuery.refetch()} id="btn-refresh-calendar">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                  <path d="M21 2v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 12a9 9 0 0115.36-6.36L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 22v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M21 12a9 9 0 01-15.36 6.36L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            {calendarQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Fetching events…</span></div>}
+            {calendarQuery.error && <div className="error-state">⚠️ {calendarQuery.error.message}</div>}
+
+            {calendarQuery.data?.authError && (
+              <div className="error-state" style={{ flexDirection: 'column', gap: '12px' }}>
+                <div>⚠️ Authentication Required: {calendarQuery.data.authError}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                  Please run <code>npx corsair auth -p googlecalendar</code> in your terminal and follow the instructions to link your account.
+                </div>
+              </div>
+            )}
+
+            {!calendarQuery.data?.authError && calendarQuery.data?.items && calendarQuery.data.items.length > 0 ? (
+              <ul className="message-list">
+                {calendarQuery.data.items.map((event: any) => (
+                  <li key={event.id} className="message-row" id={`event-${event.id}`}>
+                    <div className="msg-avatar">
+                      📅
+                    </div>
+                    <div className="msg-body">
+                      <div className="msg-top-line">
+                        <span className="msg-sender">
+                          {event.creator?.email || "Unknown Creator"}
+                        </span>
+                        <span className="msg-time">{timeAgo(event.created)}</span>
+                      </div>
+                      <div className="msg-subject">
+                        {event.summary || "(No Title)"}
+                      </div>
+                      <p className="msg-snippet">
+                        {event.start?.dateTime ? new Date(event.start.dateTime as string).toLocaleString() : (event.start?.date || "No start date")}{" - "}
+                        {event.end?.dateTime ? new Date(event.end.dateTime as string).toLocaleString() : (event.end?.date || "No end date")}
+                      </p>
+                      {event.status && (
+                        <div className="msg-labels">
+                          <span className="label-chip">{event.status}</span>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              !calendarQuery.isLoading && !calendarQuery.error && !calendarQuery.data?.authError && (
+                <div className="empty-state">
+                  <span className="empty-icon">📅</span>
+                  <p>No events found</p>
+                </div>
+              )
+            )}
           </section>
         )}
 
