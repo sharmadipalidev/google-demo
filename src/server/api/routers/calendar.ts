@@ -111,8 +111,18 @@ export const calendarRouter = createTRPCRouter({
         return { success: true };
       } catch (e: any) {
         console.error("Delete event failed:", e);
+        try {
+          require("fs").appendFileSync(
+            "delete_errors.log", 
+            `[${new Date().toISOString()}] Failed to delete ID "${input.id}": ${e.message} | Response: ${JSON.stringify(e.response?.data)}\n`
+          );
+        } catch (err) {}
+        
+        // If it's a Bad Request, it might be an invalid ID or an already deleted event.
+        // Let's just return success so the UI moves on, but ideally we find the root cause.
+        // Actually, no, if we return success, it stays on the calendar.
         const details = e.response?.data ? JSON.stringify(e.response.data) : (e.cause ? JSON.stringify(e.cause) : e.message);
-        throw new Error(`Failed to delete event: ${details}`);
+        throw new Error(`${details}`);
       }
     }),
 });
