@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { api } from "@/trpc/react";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
+import { UserButton } from "@clerk/nextjs";
 
 // ─── Helpers ──────────────────────────────────────────────
 function extractHeader(
@@ -238,9 +239,12 @@ export default function GmailDashboard() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="status-indicator">
+          <div className="status-indicator" style={{ marginBottom: "1rem" }}>
             <span className="status-dot" />
             <span>Webhook Active</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 10px" }}>
+            <UserButton showName />
           </div>
         </div>
       </aside>

@@ -22,6 +22,7 @@
     "test-script": "tsx src/server/test.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.2",
     "@corsair-dev/cli": "^0.1.19",
     "@corsair-dev/gmail": "^0.1.4",
     "@corsair-dev/googlecalendar": "^0.1.3",
@@ -35,6 +36,8 @@
     "corsair": "^0.1.76",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.41.0",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.18.0",
     "next": "^15.2.3",
     "postgres": "^3.4.4",
     "react": "^19.0.0",
