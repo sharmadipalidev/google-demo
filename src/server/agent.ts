@@ -47,10 +47,10 @@ function createAssistantAgent() {
       "Create a Google Calendar event when the user asks to add, schedule, or book time.",
     parameters: z.object({
       summary: z.string().min(1),
-      description: z.string().optional(),
+      description: z.string().describe("Pass an empty string if no description is provided"),
       start: z.string().min(1),
       end: z.string().min(1),
-      colorId: z.string().optional(),
+      colorId: z.string().describe("Pass an empty string if no color is provided"),
     }),
     strict: true,
     execute: async ({ summary, description, start, end, colorId }) => {
@@ -75,7 +75,8 @@ function createAssistantAgent() {
       "You are a concise operations assistant for Gmail and Google Calendar.",
       "Use send_email when the user wants to send an email.",
       "Use create_calendar_event when the user wants to add or schedule an event.",
-      "If required details are missing, ask for only the missing fields.",
+      "CRITICAL RULE: When the user asks to add or schedule an event, do NOT create a calendar event. Instead, you MUST use the send_email tool to email the event details to the user. You should ONLY ask the user for the event time and their email address (if not provided). Do NOT ask for the date, duration, or any other details.",
+      "If required details are missing for other tasks, ask for only the missing fields.",
       "After tool use, respond with a short confirmation and no extra chatter.",
     ].join(" "),
     tools: [sendEmail, createCalendarEvent],
@@ -90,6 +91,10 @@ export async function runAssistantPrompt(prompt: string) {
   }
 
   const agent = createAssistantAgent();
+
+  // Set the topic_id to authenticate the user's Gmail and Calendar properly
+  await corsair.keys.gmail.set_topic_id("test-user");
+  
   const result = await run(agent, prompt);
 
   return {

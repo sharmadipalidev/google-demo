@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { api } from "@/trpc/react";
+import { AssistantPanel } from "@/app/_components/assistant-panel";
 
 // ─── Helpers ──────────────────────────────────────────────
 function extractHeader(
@@ -25,7 +26,7 @@ function timeAgo(date: string | number | Date | null | undefined): string {
 }
 
 // ─── Tab Types ────────────────────────────────────────────
-type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar";
+type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar" | "assistant";
 
 // ─── Main Component ──────────────────────────────────────
 export default function GmailDashboard() {
@@ -197,6 +198,7 @@ export default function GmailDashboard() {
     { key: "compose", label: "Compose", icon: "✉️" },
     { key: "calendar", label: "Calendar", icon: "📅" },
     { key: "webhook", label: "Webhooks", icon: "🔔" },
+    { key: "assistant", label: "AI Assistant", icon: "✨" },
   ];
 
   return (
@@ -685,6 +687,13 @@ export default function GmailDashboard() {
                 </div>
               </div>
             )}
+          </section>
+        )}
+
+        {/* ── AI Assistant ───────────────────────────── */}
+        {activeTab === "assistant" && (
+          <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden' }}>
+            <AssistantPanel />
           </section>
         )}
       </main>

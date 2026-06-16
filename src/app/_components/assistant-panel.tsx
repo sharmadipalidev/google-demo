@@ -1,14 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
 import { api } from "@/trpc/react";
-
-const promptExamples = [
-  "Send an email to alex@example.com saying I will join the meeting at 3 PM.",
-  "Create a calendar event tomorrow from 2 PM to 3 PM called Design review.",
-  "Email priya@example.com a short follow-up about the project status.",
-];
 
 export function AssistantPanel() {
   const [prompt, setPrompt] = useState("");
@@ -17,6 +10,7 @@ export function AssistantPanel() {
   const runPrompt = api.assistant.runPrompt.useMutation({
     onSuccess: (data) => {
       setResult(data.output);
+      setPrompt(""); // Clear input on success
     },
     onError: (error) => {
       setResult(error.message);
@@ -26,94 +20,63 @@ export function AssistantPanel() {
   const canSubmit = useMemo(() => prompt.trim().length > 0, [prompt]);
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-white">AI Assistant</h2>
-            <p className="text-sm text-white/55">
-              Send mail or create calendar events from a single prompt.
+    <div className="flex h-full w-full flex-col bg-[#0f0f13] text-white">
+      <div className="flex-1 overflow-y-auto p-8 space-y-4">
+        {result ? (
+          <div className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400">
+              🤖
+            </div>
+            <div className="mt-1 rounded-xl rounded-tl-none border border-white/10 bg-white/5 p-4 text-sm leading-relaxed whitespace-pre-wrap text-white/90">
+              {result}
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center text-center opacity-50">
+            <div className="mb-4 text-5xl">✨</div>
+            <h3 className="text-lg font-medium text-white">How can I help you today?</h3>
+            <p className="mt-2 text-sm max-w-sm">
+              I can send emails, schedule calendar events, and manage your tasks.
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={() => runPrompt.reset()}
-            className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-          >
-            Clear
-          </button>
-        </div>
-
-        <label className="mb-2 block text-xs font-semibold tracking-wide text-white/45 uppercase">
-          Prompt
-        </label>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Ask for an email or a calendar event..."
-          rows={6}
-          className="w-full resize-none rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white transition outline-none placeholder:text-white/30 focus:border-indigo-400/60"
-        />
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {promptExamples.map((example) => (
-            <button
-              key={example}
-              type="button"
-              onClick={() => setPrompt(example)}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70 transition hover:bg-white/10 hover:text-white"
-            >
-              {example}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            type="button"
-            disabled={!canSubmit || runPrompt.isPending}
-            onClick={() => runPrompt.mutate({ prompt })}
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {runPrompt.isPending ? "Working..." : "Run prompt"}
-          </button>
-
-          <span className="text-xs text-white/45">
-            {runPrompt.isPending
-              ? "Executing with Gmail and Calendar access"
-              : "Ready"}
-          </span>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-white/10 bg-slate-950/70 p-4">
-          <div className="mb-2 text-xs font-semibold tracking-wide text-white/45 uppercase">
-            Result
-          </div>
-          <div className="min-h-24 text-sm leading-6 whitespace-pre-wrap text-white/85">
-            {result || "No action yet."}
-          </div>
-        </div>
+        )}
       </div>
 
-      <aside className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <h3 className="text-sm font-semibold text-white">Connected tools</h3>
-        <div className="mt-3 space-y-3 text-sm text-white/70">
-          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2">
-            <span>Gmail</span>
-            <span className="text-emerald-400">Ready</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2">
-            <span>Google Calendar</span>
-            <span className="text-emerald-400">Ready</span>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-white/10 bg-slate-950/50 p-3 text-sm text-white/60">
-          Use explicit recipient, subject, and time when the prompt is
-          ambiguous.
-        </div>
-      </aside>
-    </section>
+      <div className="border-t border-white/5 bg-[#14141a] p-4">
+        <form
+          className="relative mx-auto flex max-w-3xl items-center"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (canSubmit && !runPrompt.isPending) {
+              setResult(""); // clear old result
+              runPrompt.mutate({ prompt });
+            }
+          }}
+        >
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Ask AI to do something..."
+            className="w-full rounded-full border border-white/10 bg-[#1a1a24] px-6 py-4 pr-24 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
+            disabled={runPrompt.isPending}
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={!canSubmit || runPrompt.isPending}
+            className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50"
+          >
+            {runPrompt.isPending ? (
+              <span className="flex items-center gap-2">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+              </span>
+            ) : (
+              "Send"
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
