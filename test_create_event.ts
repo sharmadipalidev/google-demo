@@ -18,7 +18,7 @@ async function main() {
             conferenceSolutionKey: { type: "hangoutsMeet" }
           }
         }
-      },
+      } as any,
     });
     console.log("Success:", result);
   } catch (e: any) {

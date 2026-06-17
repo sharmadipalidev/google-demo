@@ -3,16 +3,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useAuth, SignInButton } from "@clerk/nextjs";
+import { ChevronRight } from "lucide-react";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { isSignedIn } = useAuth();
 
-  const links = [
-    "service",
-    "patient resources",
-    "about us",
-    "education center",
-  ];
+
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 py-6 md:py-10 bg-gradient-to-b from-[#f1f1f1]/80 to-transparent backdrop-blur-[2px]">
@@ -50,30 +48,31 @@ export default function Navbar() {
           </span>
         </div>
 
-        {/* Center: Desktop Nav (Cols 4-9) */}
-        <div className="hidden md:flex col-span-6 justify-center items-center gap-8">
-          {links.map((link) => (
-            <Link
-              key={link}
-              href="#"
-              className="text-xs font-medium lowercase text-zinc-600 hover:text-[#1a1a1a] transition-colors"
-            >
-              {link}
-            </Link>
-          ))}
-        </div>
 
-        {/* Right: Actions (Cols 10-12) */}
-        <div className="hidden md:flex col-span-3 justify-end items-center gap-6">
+
+        {/* Right: Actions */}
+        <div className="hidden md:flex col-span-9 justify-end items-center gap-4">
           <Link
-            href="#"
-            className="text-xs font-medium lowercase text-zinc-600 hover:text-[#1a1a1a] transition-colors"
+            href="https://docs.corsair.dev"
+            target="_blank"
+            className="bg-white/50 border border-black/10 text-zinc-900 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-colors shadow-sm"
           >
-            find help
+            Read Documentation
           </Link>
-          <button className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full text-xs font-medium hover:bg-black transition-colors flex items-center gap-1">
-            get started <span>→</span>
-          </button>
+          {isSignedIn ? (
+            <Link
+              href="/gmail"
+              className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-black transition-colors flex items-center gap-1 shadow-sm"
+            >
+              Get Started <ChevronRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <SignInButton mode="modal">
+              <button className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-black transition-colors flex items-center gap-1 shadow-sm">
+                Go to Dashboard <ChevronRight className="w-4 h-4" />
+              </button>
+            </SignInButton>
+          )}
         </div>
 
         {/* Mobile Toggle */}
@@ -107,26 +106,32 @@ export default function Navbar() {
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-0 left-0 w-full h-screen bg-[#f1f1f1] flex flex-col items-center justify-center gap-8 z-40"
           >
-            {links.map((link) => (
+
+            <div className="flex flex-col gap-4 mt-8 w-64">
               <Link
-                key={link}
-                href="#"
+                href="https://docs.corsair.dev"
+                target="_blank"
                 onClick={() => setIsOpen(false)}
-                className="text-2xl font-medium lowercase text-zinc-800 hover:text-brand-green transition-colors"
+                className="bg-white/50 border border-black/10 text-zinc-900 px-6 py-4 rounded-xl text-lg font-semibold hover:bg-white transition-colors text-center shadow-sm w-full"
               >
-                {link}
+                Read Documentation
               </Link>
-            ))}
-            <Link
-              href="#"
-              onClick={() => setIsOpen(false)}
-              className="text-lg mt-4 font-medium lowercase text-zinc-600 hover:text-[#1a1a1a] transition-colors"
-            >
-              find help
-            </Link>
-            <button className="mt-4 bg-[#1a1a1a] text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-black transition-colors">
-              get started →
-            </button>
+              {isSignedIn ? (
+                <Link
+                  href="/gmail"
+                  onClick={() => setIsOpen(false)}
+                  className="bg-[#1a1a1a] text-white px-6 py-4 rounded-xl text-lg font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-sm w-full"
+                >
+                  Go to Dashboard <ChevronRight className="w-5 h-5" />
+                </Link>
+              ) : (
+                <SignInButton mode="modal">
+                  <button onClick={() => setIsOpen(false)} className="bg-[#1a1a1a] text-white px-6 py-4 rounded-xl text-lg font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-sm w-full">
+                    Go to Dashboard <ChevronRight className="w-5 h-5" />
+                  </button>
+                </SignInButton>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

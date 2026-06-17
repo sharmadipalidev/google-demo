@@ -40,23 +40,14 @@ export default function Hero() {
             <span className="text-[#8e8e8e]">Supercharged by AI</span>
           </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="mt-8 text-lg md:text-xl text-white max-w-2xl font-sans bg-black/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-lg"
-          >
-            Manage your Gmail, schedule Google Meet events, and automate your workflow with a conversational AI agent.
-          </motion.p>
-
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
-            className="mt-12 bg-white rounded-[6px] border border-black/[0.05] p-1 pl-4 flex items-center shadow-sm w-full max-w-[400px]"
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="mt-8 bg-white rounded-[6px] border border-black/[0.05] p-1 pl-4 flex items-center shadow-sm w-full max-w-[400px]"
           >
             <input
-              placeholder="Ask me anything..."
+              placeholder="Enter you gmail to get started.."
               className="flex-1 bg-transparent border-none outline-none text-[#1a1a1a] placeholder:text-[#8e8e8e] text-sm"
             />
             <button className="bg-[#1a1a1a] text-white w-9 h-9 rounded-full relative flex items-center justify-center shrink-0">
@@ -65,6 +56,15 @@ export default function Hero() {
               </svg>
             </button>
           </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="mt-8 text-lg md:text-xl text-white max-w-2xl font-sans bg-black/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-lg"
+          >
+            Manage your Gmail, schedule Google Meet events, and automate your workflow with a conversational AI agent.
+          </motion.p>
         </div>
       </div>
 

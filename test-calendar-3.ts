@@ -10,7 +10,8 @@ async function main() {
     
     const recurringInstances = result.items?.filter(i => i.id?.startsWith('_'));
     if (recurringInstances && recurringInstances.length > 0) {
-      const id = recurringInstances[0].id!;
+      const id = recurringInstances[0]?.id;
+      if (!id) return;
       console.log("Attempting to delete recurring instance:", id);
       try {
         await tenant.googlecalendar.api.events.delete({

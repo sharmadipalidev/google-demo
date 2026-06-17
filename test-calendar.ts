@@ -10,7 +10,8 @@ async function main() {
     console.log("Events:", result.items?.map((i: any) => i.id));
     
     if (result.items && result.items.length > 0) {
-      const id = result.items[0].id!;
+      const id = result.items[0]?.id;
+      if (!id) return;
       console.log("Attempting to delete:", id);
       try {
         await tenant.googlecalendar.api.events.delete({

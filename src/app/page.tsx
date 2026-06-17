@@ -37,36 +37,7 @@ export default function Home() {
         <Hero />
 
         <div className="container mx-auto px-4 pb-20 relative z-10">
-          {/* Existing Content section below Hero */}
-          <motion.div 
-            className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto mt-16 mb-24"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={containerVariants}
-          >
 
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              {isSignedIn ? (
-                <Link href="/gmail" className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold text-white bg-[#1a1a1a] rounded-xl overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                  <span className="relative flex items-center gap-2">
-                    Go to Dashboard <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </Link>
-              ) : (
-                <SignInButton mode="modal">
-                  <button className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold text-white bg-[#1a1a1a] rounded-xl overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                    <span className="relative flex items-center gap-2">
-                      Launch AI Assistant <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
-                </SignInButton>
-              )}
-              <Link href="https://docs.corsair.dev" target="_blank" className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold text-zinc-900 bg-white/50 border border-black/10 rounded-xl hover:bg-white transition-colors">
-                Read Documentation
-              </Link>
-            </motion.div>
-          </motion.div>
 
           {/* Features Grid */}
           <motion.div 
@@ -96,22 +67,7 @@ export default function Home() {
             />
           </motion.div>
 
-          {/* Security / Trust section */}
-          <motion.div 
-            className="mt-32 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-flex items-center gap-2 text-zinc-500 mb-4">
-              <ShieldCheck className="w-5 h-5" />
-              <span className="text-sm font-medium tracking-wider uppercase">Enterprise Grade Security</span>
-            </div>
-            <p className="text-zinc-500 max-w-md mx-auto">
-              Your data is securely authenticated using OAuth 2.0. We never store your emails or calendar events permanently.
-            </p>
-          </motion.div>
+
         </div>
         
         <Pricing />

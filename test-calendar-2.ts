@@ -15,7 +15,8 @@ async function main() {
         end: { dateTime: endIso }
       }
     });
-    const id = createResult.id!;
+    const id = createResult.id;
+    if (!id) return;
     console.log("Created event with id:", id);
     
     console.log("Attempting to delete:", id);

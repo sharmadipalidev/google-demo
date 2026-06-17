@@ -72,7 +72,7 @@ function createAssistantAgent() {
                             conferenceSolutionKey: { type: "hangoutsMeet" }
                         }
                     }
-                },
+                } as any,
             });
 
             return `Calendar event created and official invite sent to ${attendeeEmail}: ${result.summary ?? summary}${result.id ? ` (event ${result.id})` : ""}. Link: ${result.hangoutLink ?? "none"}`;
