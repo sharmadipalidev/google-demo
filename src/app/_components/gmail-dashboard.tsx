@@ -245,17 +245,8 @@ export default function GmailDashboard() {
     <div className="gmail-dashboard">
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-icon">
-            <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="brand-title">Gmail Tester</h1>
-            <p className="brand-sub">Corsair Integration</p>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "var(--bg-elevated)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", marginBottom: "16px", cursor: "pointer", transition: "all 0.2s" }} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
+          <UserButton showName appearance={{ elements: { userButtonBox: "flex-row-reverse", userButtonOuterIdentifier: "font-semibold text-sm text-primary dark:text-white" } }} />
         </div>
 
 
@@ -278,12 +269,9 @@ export default function GmailDashboard() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="status-indicator" style={{ marginBottom: "1rem" }}>
+          <div className="status-indicator">
             <span className="status-dot" />
             <span>Webhook Active</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 10px" }}>
-            <UserButton showName />
           </div>
         </div>
       </aside>
