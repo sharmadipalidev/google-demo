@@ -383,8 +383,8 @@
   padding: 12px 28px;
   border: none;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent), #818cf8);
-  color: #fff;
+  background: var(--accent);
+  color: var(--bg-deep);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -689,11 +689,9 @@
 }
 
 .form-group label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .form-group input,
@@ -707,7 +705,7 @@
   font-family: inherit;
   outline: none;
   transition: all var(--transition-fast);
-  resize: vertical;
+  resize: none;
 }
 
 .form-group input:focus,

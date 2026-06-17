@@ -70,6 +70,7 @@ function getEmailBody(payload: any): { html: string; text: string } {
       }
     }
   }
+  return { html, text };
 }
 
 const avatarColors = [
@@ -344,11 +345,8 @@ export default function GmailDashboard() {
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
         <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px' }}>
-          <div className="brand-icon" style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--bg-deep)', flexShrink: 0 }}>
-            <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" />
-              <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+          <div className="brand-icon" style={{ width: '36px', height: '36px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/download.svg" alt="neurosync logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div>
             <h1 className="brand-title" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>neurosync</h1>

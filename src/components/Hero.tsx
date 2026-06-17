@@ -10,7 +10,7 @@ export default function Hero() {
  return (
  <section className="relative min-h-[110vh] sm:min-h-[140vh] w-full flex flex-col items-center justify-start overflow-hidden bg-bg-base transition-colors duration-300">
  <div className="absolute top-[10vh] sm:top-[12vh] left-0 w-full h-[95vh] sm:h-[120vh] z-0 pointer-events-none">
- <div className="absolute top-0 left-0 w-full h-24 sm:h-32 bg-gradient-to-b from-bg-base to-transparent z-10 transition-colors duration-300"></div>
+ <div className="absolute top-0 left-0 w-full h-24 sm:h-32 bg-gradient-to-b from-bg-base dark:from-[#0a0a0a] to-transparent z-10 transition-colors duration-300"></div>
  <video
  autoPlay
  loop
@@ -30,8 +30,8 @@ export default function Hero() {
  transition={{ duration: 0.8, delay: 0.05 }}
  className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-medium leading-[1.1] tracking-tight"
  >
- <span className="text-[#1a1a1a] transition-colors">Your Workspace,</span><br />
- <span className="text-[#8e8e8e] transition-colors">Supercharged by AI</span>
+ <span className="text-[#1a1a1a] dark:text-white transition-colors">Your Workspace,</span><br />
+ <span className="text-[#8e8e8e] dark:text-zinc-400 transition-colors">Supercharged by AI</span>
  </motion.h1>
 
  <motion.div
@@ -42,7 +42,7 @@ export default function Hero() {
  >
  <input
  placeholder="Enter you gmail to get started.."
- className="flex-1 bg-transparent border-none outline-none text-[#1a1a1a] placeholder:text-[#8e8e8e] text-sm"
+ className="flex-1 bg-transparent border-none outline-none text-[#1a1a1a] dark:text-zinc-900 placeholder:text-[#8e8e8e] dark:placeholder:text-zinc-500 text-sm"
  />
  {isSignedIn ? (
  <Link href="/gmail" className="bg-[#1a1a1a] text-white hover:bg-black transition-colors w-9 h-9 rounded-full relative flex items-center justify-center shrink-0">
