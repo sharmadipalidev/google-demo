@@ -18,7 +18,7 @@ export default function Navbar() {
  <div className="grid grid-cols-12 max-w-7xl mx-auto px-6 items-center">
  {/* Left: Logo (Cols 1-3) */}
  <div className="col-span-8 md:col-span-3 flex items-center gap-2 z-50 relative">
- <img src="/download.svg" alt="neurosync logo" className="w-8 h-8 object-contain" />
+ <img src="/download.svg" alt="neurosync logo" className="w-8 h-8 object-contain dark:invert" />
  <span className="font-display font-semibold text-xl text-[#1a1a1a] dark:text-white tracking-tight">
  neurosync
  </span>
