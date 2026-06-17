@@ -345,8 +345,8 @@ export default function GmailDashboard() {
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
         <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px' }}>
-          <div className="brand-icon" style={{ width: '36px', height: '36px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/download.svg" alt="neurosync logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <div className="brand-icon" style={{ width: '24px', height: '24px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', boxShadow: 'none' }}>
+            <img src="/logo.svg" alt="neurosync logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} className="dark:invert" />
           </div>
           <div>
             <h1 className="brand-title" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>neurosync</h1>

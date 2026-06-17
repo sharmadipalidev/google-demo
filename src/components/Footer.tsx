@@ -22,7 +22,7 @@ export default function Footer() {
  </Link>
  </div>
  <div className="mt-8 md:order-1 md:mt-0 flex items-center gap-2 justify-center md:justify-start">
- <img src="/download.svg" alt="neurosync logo" className="w-6 h-6 object-contain dark:invert" />
+ <img src="/logo.svg" alt="neurosync logo" className="w-5 h-5 object-contain dark:invert" />
  <p className="text-center text-xs leading-5 text-[#8e8e8e] dark:text-zinc-500 transition-colors">
  &copy; 2026 neurosync, Inc. All rights reserved.
  </p>
