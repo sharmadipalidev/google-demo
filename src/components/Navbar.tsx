@@ -53,12 +53,12 @@ export default function Navbar() {
               href="/gmail"
               className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-black transition-colors flex items-center gap-1 shadow-sm"
             >
-              Sign in <ChevronRight className="w-4 h-4" />
+              Dashboard <ChevronRight className="w-4 h-4" />
             </Link>
           ) : (
             <SignInButton mode="modal">
               <button className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-black transition-colors flex items-center gap-1 shadow-sm">
-                Get Started <ChevronRight className="w-4 h-4" />
+                Sign in <ChevronRight className="w-4 h-4" />
               </button>
             </SignInButton>
           )}
@@ -102,12 +102,12 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className="bg-[#1a1a1a] text-white px-5 py-3 rounded-full text-lg font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-sm w-full"
                 >
-                  Get Started <ChevronRight className="w-5 h-5" />
+                  Dashboard <ChevronRight className="w-5 h-5" />
                 </Link>
               ) : (
                 <SignInButton mode="modal">
                   <button onClick={() => setIsOpen(false)} className="bg-[#1a1a1a] text-white px-5 py-3 rounded-full text-lg font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-sm w-full">
-                    Get Started <ChevronRight className="w-5 h-5" />
+                    Sign in <ChevronRight className="w-5 h-5" />
                   </button>
                 </SignInButton>
               )}

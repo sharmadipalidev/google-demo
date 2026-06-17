@@ -881,7 +881,7 @@ export default function GmailDashboard() {
                     <option value="week">Week</option>
                     <option value="day">Day</option>
                   </select>
-                  <button style={{ padding: '6px 16px', marginLeft: '12px', background: 'var(--accent)', color: 'var(--bg-deep)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
+                  <button style={{ padding: '6px 16px', marginLeft: '12px', background: '#ffffff', color: '#1a1a1a', border: '1px solid var(--border)', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     Create
                   </button>
