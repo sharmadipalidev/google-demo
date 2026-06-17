@@ -1,87 +1,65 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Bot, ShieldCheck } from "lucide-react";
 
 export default function About() {
   return (
-    <section id="about" className="py-24 sm:py-32 relative z-10 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          
-          {/* Left Side: Typography */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl font-display font-semibold tracking-tight text-[#1a1a1a] dark:text-zinc-100 sm:text-5xl mb-6">
-              Why Neurosync?
-            </h2>
-            <p className="text-lg leading-8 text-[#8e8e8e] dark:text-zinc-400 mb-6">
-              We believe your inbox shouldn't be a source of stress. Neurosync leverages state-of-the-art AI to transform your daily communication and scheduling into a seamless, conversational experience.
-            </p>
-            <p className="text-lg leading-8 text-[#8e8e8e] dark:text-zinc-400">
-              Stop switching context between your calendar, email, and task manager. Simply tell Neurosync what you want to achieve, and watch it orchestrate your workflow in real-time.
-            </p>
-          </motion.div>
-
-          {/* Right Side: Staggered Cards */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-tr from-brand-green/20 to-transparent blur-3xl rounded-full" />
-            
-            <div className="grid gap-6 relative z-10">
+    <section className="py-24 sm:py-32 relative overflow-hidden transition-colors">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
+        <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-2">
+            <div className="flex flex-col justify-center">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl p-6 border border-black/5 dark:border-white/5 shadow-sm ml-0 lg:ml-12"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
               >
-                <div className="w-10 h-10 rounded-xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green flex items-center justify-center mb-4">
-                  <Bot size={20} />
-                </div>
-                <h3 className="text-lg font-semibold text-[#1a1a1a] dark:text-zinc-100 mb-2">Conversational AI Agent</h3>
-                <p className="text-[#8e8e8e] dark:text-zinc-400 text-sm leading-relaxed">
-                  Talk to your inbox like a personal assistant. Ask to summarize threads or draft complex replies instantly.
+                <h2 className="text-3xl font-display font-bold tracking-tight text-[#1a1a1a] dark:text-white sm:text-4xl transition-colors">
+                  A new standard for productivity
+                </h2>
+                <p className="mt-6 text-lg leading-8 text-[#8e8e8e] dark:text-zinc-400 transition-colors">
+                  We believe that managing your inbox and calendar shouldn't feel like a chore. Neurosync bridges the gap between your intent and execution by leveraging advanced AI to handle the busywork, so you can focus on what actually matters.
                 </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="bg-[#1a1a1a] dark:bg-zinc-800 rounded-2xl p-6 border border-white/10 shadow-xl mr-0 lg:mr-12"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white/10 dark:bg-white/5 text-brand-green flex items-center justify-center mb-4">
-                  <Sparkles size={20} />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Smart Workflows</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  Automatically schedule Google Meets, send invites, and manage follow-ups without leaving the chat.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl p-6 border border-black/5 dark:border-white/5 shadow-sm ml-0 lg:ml-12"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green flex items-center justify-center mb-4">
-                  <ShieldCheck size={20} />
-                </div>
-                <h3 className="text-lg font-semibold text-[#1a1a1a] dark:text-zinc-100 mb-2">Enterprise-Grade Security</h3>
-                <p className="text-[#8e8e8e] dark:text-zinc-400 text-sm leading-relaxed">
-                  Your data is protected. We use secure OAuth connections and never store your sensitive emails unnecessarily.
-                </p>
+                <dl className="mt-10 max-w-xl space-y-8 text-base leading-7 text-[#8e8e8e] dark:text-zinc-400 transition-colors">
+                  <div className="relative pl-9">
+                    <dt className="inline font-semibold text-[#1a1a1a] dark:text-zinc-200 transition-colors">
+                      <svg className="absolute left-1 top-1 h-5 w-5 text-brand-green" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                      </svg>
+                      Frictionless Setup.
+                    </dt>
+                    <dd className="inline"> Connect your Google account securely and instantly unlock AI-driven insights across your entire history.</dd>
+                  </div>
+                  <div className="relative pl-9">
+                    <dt className="inline font-semibold text-[#1a1a1a] dark:text-zinc-200 transition-colors">
+                      <svg className="absolute left-1 top-1 h-5 w-5 text-brand-green" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                      </svg>
+                      Privacy First.
+                    </dt>
+                    <dd className="inline"> We use secure Corsair webhooks and edge processing. Your data remains strictly within your control.</dd>
+                  </div>
+                </dl>
               </motion.div>
             </div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="flex items-center justify-center lg:justify-end"
+            >
+              <div className="relative w-full max-w-lg">
+                <div className="absolute -inset-1 bg-brand-green opacity-20 dark:opacity-10 rounded-[32px] blur-2xl transition-opacity"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                  alt="Dashboard preview"
+                  className="relative rounded-[32px] shadow-2xl object-cover w-full aspect-square border border-black/5 dark:border-white/5 transition-colors"
+                />
+              </div>
+            </motion.div>
           </div>
-
         </div>
       </div>
     </section>

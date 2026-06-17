@@ -33,11 +33,11 @@ const tiers = [
 
 export default function Pricing() {
  return (
- <section className="py-24 sm:py-32 relative z-10">
+ <section className="py-24 sm:py-32 relative z-10 transition-colors">
  <div className="mx-auto max-w-7xl px-6 lg:px-8">
  <div className="mx-auto max-w-2xl text-center">
- <h2 className="text-3xl font-display font-semibold tracking-tight text-[#1a1a1a] sm:text-5xl">Simple, transparent pricing</h2>
- <p className="mt-4 text-lg leading-8 text-[#8e8e8e]">
+ <h2 className="text-3xl font-display font-semibold tracking-tight text-[#1a1a1a] dark:text-white sm:text-5xl transition-colors">Simple, transparent pricing</h2>
+ <p className="mt-4 text-lg leading-8 text-[#8e8e8e] dark:text-zinc-400 transition-colors">
  Choose the plan that fits your workflow. Upgrade anytime as your needs grow.
  </p>
  </div>
@@ -49,13 +49,13 @@ export default function Pricing() {
  viewport={{ once: true }}
  transition={{ duration: 0.5, delay: tierIdx * 0.1 }}
  key={tier.name}
- className={`rounded-3xl p-8 ring-1 xl:p-10 ${
+ className={`rounded-3xl p-8 ring-1 xl:p-10 transition-colors ${
  tier.popular
- ? 'bg-[#1a1a1a] ring-[#1a1a1a] text-white shadow-xl scale-105 z-10'
- : 'bg-white/50 backdrop-blur-sm ring-black/10 text-[#1a1a1a]'
+ ? 'bg-[#1a1a1a] dark:bg-zinc-800 ring-[#1a1a1a] dark:ring-white/10 text-white shadow-xl scale-105 z-10'
+ : 'bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-sm ring-black/10 dark:ring-white/10 text-[#1a1a1a] dark:text-white'
  }`}
  >
- <h3 id={tier.name} className={`text-lg font-semibold leading-8 ${tier.popular ? 'text-white' : 'text-[#1a1a1a]'}`}>
+ <h3 id={tier.name} className={`text-lg font-semibold leading-8 ${tier.popular ? 'text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`}>
  {tier.name}
  </h3>
  {tier.popular && (
@@ -63,25 +63,25 @@ export default function Pricing() {
  Most popular
  </p>
  )}
- <p className={`mt-4 text-sm leading-6 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e]'}`}>{tier.description}</p>
+ <p className={`mt-4 text-sm leading-6 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>{tier.description}</p>
  <p className="mt-6 flex items-baseline gap-x-1">
- <span className={`text-4xl font-bold tracking-tight ${tier.popular ? 'text-white' : 'text-[#1a1a1a]'}`}>{tier.price}</span>
- {tier.period && <span className={`text-sm font-semibold leading-6 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e]'}`}>{tier.period}</span>}
+ <span className={`text-4xl font-bold tracking-tight ${tier.popular ? 'text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`}>{tier.price}</span>
+ {tier.period && <span className={`text-sm font-semibold leading-6 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>{tier.period}</span>}
  </p>
  <button
  aria-describedby={tier.name}
  className={`mt-6 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-full transition-colors ${
  tier.popular
- ? 'bg-white text-[#1a1a1a] hover:bg-gray-100'
- : 'bg-[#1a1a1a] text-white hover:bg-black'
+ ? 'bg-white dark:bg-brand-green text-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-[#8ade00]'
+ : 'bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-gray-200'
  }`}
  >
  {tier.buttonText}
  </button>
- <ul role="list" className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e]'}`}>
+ <ul role="list" className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>
  {tier.features.map((feature) => (
  <li key={feature} className="flex gap-x-3">
- <Check className={`h-6 w-5 flex-none ${tier.popular ? 'text-brand-green' : 'text-[#1a1a1a]'}`} aria-hidden="true" />
+ <Check className={`h-6 w-5 flex-none ${tier.popular ? 'text-brand-green' : 'text-[#1a1a1a] dark:text-brand-green'} transition-colors`} aria-hidden="true" />
  {feature}
  </li>
  ))}

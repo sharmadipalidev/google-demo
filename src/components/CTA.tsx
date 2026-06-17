@@ -1,45 +1,46 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { SignInButton, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { useAuth, SignInButton } from "@clerk/nextjs";
 
 export default function CTA() {
   const { isSignedIn } = useAuth();
 
   return (
-    <section className="py-24 relative z-10">
-      <div className="mx-auto max-w-5xl px-6 lg:px-8">
+    <section className="relative py-24 sm:py-32 overflow-hidden transition-colors">
+      <div className="absolute inset-0 z-0 flex items-center justify-center">
+        <div className="w-full h-full bg-[#1a1a1a] dark:bg-black transition-colors"></div>
+        <div className="absolute w-[800px] h-[800px] bg-brand-green/20 rounded-full blur-[120px] opacity-50 pointer-events-none"></div>
+      </div>
+      
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="relative isolate overflow-hidden bg-[#1a1a1a] px-6 py-24 text-center shadow-2xl sm:rounded-3xl sm:px-16 border border-white/10"
+          transition={{ duration: 0.8 }}
+          className="mx-auto max-w-3xl"
         >
-          {/* Subtle green glow behind */}
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-green/20 blur-[100px] rounded-full pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-green/10 blur-[100px] rounded-full pointer-events-none" />
-
-          <h2 className="mx-auto max-w-2xl text-3xl font-display font-semibold tracking-tight text-white sm:text-4xl">
-            Ready to supercharge your inbox?
+          <h2 className="text-4xl font-display font-bold tracking-tight text-white sm:text-6xl transition-colors">
+            Ready to reclaim your time?
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
-            Join the future of email management. Stop typing and start commanding your workspace with Neurosync today.
+          <p className="mt-6 text-lg leading-8 text-zinc-300 transition-colors">
+            Join thousands of professionals who have automated their inbox and calendar using the power of Neurosync AI.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             {isSignedIn ? (
               <Link
                 href="/gmail"
-                className="rounded-xl bg-brand-green px-8 py-3.5 text-sm font-semibold text-[#1a1a1a] shadow-sm hover:bg-brand-green/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 flex items-center gap-2"
+                className="rounded-full bg-brand-green px-8 py-4 text-sm font-semibold text-[#1a1a1a] shadow-sm hover:bg-[#8ade00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green transition-all hover:scale-105 flex items-center gap-2"
               >
-                Go to Dashboard <ArrowRight className="w-4 h-4" />
+                Go to Dashboard <ChevronRight className="w-4 h-4" />
               </Link>
             ) : (
               <SignInButton mode="modal">
-                <button className="rounded-xl bg-brand-green px-8 py-3.5 text-sm font-semibold text-[#1a1a1a] shadow-sm hover:bg-brand-green/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 flex items-center gap-2">
-                  Get Started for Free <ArrowRight className="w-4 h-4" />
+                <button className="rounded-full bg-brand-green px-8 py-4 text-sm font-semibold text-[#1a1a1a] shadow-sm hover:bg-[#8ade00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green transition-all hover:scale-105 flex items-center gap-2">
+                  Get Started for Free <ChevronRight className="w-4 h-4" />
                 </button>
               </SignInButton>
             )}
