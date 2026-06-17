@@ -62,7 +62,20 @@ function getEmailBody(payload: any): { html: string; text: string } {
       }
     }
   }
-  return { html, text };
+}
+
+const avatarColors = [
+  "#ef4444", "#f97316", "#f59e0b", "#10b981", 
+  "#06b6d4", "#3b82f6", "#6366f1", "#a855f7", "#ec4899"
+];
+
+function getAvatarColor(str: string) {
+  if (!str) return "#6b7280"; // fallback grey
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
 // ─── Tab Types ────────────────────────────────────────────
@@ -482,20 +495,25 @@ export default function GmailDashboard() {
 
             {!selectedMessageId && messagesQuery.data?.messages && (
               <ul className="message-list">
-                {messagesQuery.data.messages.map((msg) => (
+                {messagesQuery.data.messages.map((msg) => {
+                  const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
+                  const initial = senderName.charAt(0).toUpperCase();
+                  const avatarColor = getAvatarColor(senderName);
+                  
+                  return (
                   <li
                     key={msg.id}
                     className="message-row"
                     onClick={() => setSelectedMessageId(msg.id!)}
                     id={`msg-${msg.id}`}
                   >
-                    <div className="msg-avatar">
-                      {msg.snippet?.charAt(0)?.toUpperCase() ?? "?"}
+                    <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
+                      {initial}
                     </div>
                     <div className="msg-body">
                       <div className="msg-top-line">
                         <span className="msg-sender">
-                          {extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || `ID: ${msg.id?.slice(0, 8)}…`}
+                          {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
                         </span>
                         <span className="msg-time">{timeAgo(msg.internalDate)}</span>
                       </div>
@@ -512,7 +530,7 @@ export default function GmailDashboard() {
                       )}
                     </div>
                   </li>
-                ))}
+                )})}
               </ul>
             )}
 
