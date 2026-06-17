@@ -872,11 +872,15 @@ export default function GmailDashboard() {
                     <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                   <button className="btn-today" onClick={handleToday}>Today</button>
-                  <div style={{ marginLeft: '12px', display: 'flex', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', padding: '4px', gap: '4px' }}>
-                    <button style={{ padding: '4px 12px', background: calendarView === 'month' ? 'var(--bg-card)' : 'transparent', border: calendarView === 'month' ? '1px solid var(--border)' : '1px solid transparent', borderRadius: '4px', cursor: 'pointer', fontWeight: calendarView === 'month' ? 600 : 500, color: calendarView === 'month' ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s' }} onClick={() => setCalendarView('month')}>Month</button>
-                    <button style={{ padding: '4px 12px', background: calendarView === 'week' ? 'var(--bg-card)' : 'transparent', border: calendarView === 'week' ? '1px solid var(--border)' : '1px solid transparent', borderRadius: '4px', cursor: 'pointer', fontWeight: calendarView === 'week' ? 600 : 500, color: calendarView === 'week' ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s' }} onClick={() => setCalendarView('week')}>Week</button>
-                    <button style={{ padding: '4px 12px', background: calendarView === 'day' ? 'var(--bg-card)' : 'transparent', border: calendarView === 'day' ? '1px solid var(--border)' : '1px solid transparent', borderRadius: '4px', cursor: 'pointer', fontWeight: calendarView === 'day' ? 600 : 500, color: calendarView === 'day' ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s' }} onClick={() => setCalendarView('day')}>Day</button>
-                  </div>
+                  <select
+                    value={calendarView}
+                    onChange={(e) => setCalendarView(e.target.value as any)}
+                    style={{ marginLeft: '12px', padding: '6px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontWeight: 500, cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none', paddingRight: '32px', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b9e%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '10px' }}
+                  >
+                    <option value="month">Month</option>
+                    <option value="week">Week</option>
+                    <option value="day">Day</option>
+                  </select>
                   <button style={{ padding: '6px 16px', marginLeft: '12px', background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     Create
