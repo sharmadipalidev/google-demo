@@ -45,9 +45,9 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { name: "Twitter", icon: TwitterIcon, href: "#" },
-  { name: "GitHub", icon: GithubIcon, href: "#" },
-  { name: "LinkedIn", icon: LinkedinIcon, href: "#" },
+  { name: "Twitter", icon: TwitterIcon, href: "https://x.com/sharmadipalidev" },
+  { name: "GitHub", icon: GithubIcon, href: "https://github.com/sharmadipalidev" },
+  { name: "LinkedIn", icon: LinkedinIcon, href: "https://www.linkedin.com/in/sharmadipalidev/" },
 ];
 
 export default function Footer() {
@@ -82,6 +82,8 @@ export default function Footer() {
                 <a
                   key={social.name}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-[#f1f1f1] flex items-center justify-center text-[#4b4b4b] hover:bg-brand-green hover:text-black transition-colors"
                   aria-label={social.name}
                 >
