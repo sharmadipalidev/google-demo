@@ -102,6 +102,7 @@ export default function GmailDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("inbox");
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [calendarDropdownOpen, setCalendarDropdownOpen] = useState(false);
 
   const [isAgentic, setIsAgentic] = useState(false);
   const [inboxCategory, setInboxCategory] = useState<"primary" | "promotions" | "social" | "updates">("primary");
@@ -359,8 +360,8 @@ export default function GmailDashboard() {
           <button
             onClick={() => setActiveTab("compose")}
             style={{
-              background: 'var(--text-primary)',
-              color: 'var(--bg-deep)',
+              background: '#ffffff',
+              color: '#1a1a1a',
               borderRadius: '12px',
               padding: '12px',
               display: 'flex',
@@ -370,8 +371,8 @@ export default function GmailDashboard() {
               fontWeight: 600,
               fontSize: '15px',
               cursor: 'pointer',
-              border: 'none',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
@@ -872,15 +873,33 @@ export default function GmailDashboard() {
                     <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                   <button className="btn-today" onClick={handleToday}>Today</button>
-                  <select
-                    value={calendarView}
-                    onChange={(e) => setCalendarView(e.target.value as any)}
-                    style={{ marginLeft: '12px', padding: '6px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontWeight: 500, cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none', paddingRight: '32px', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b9e%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '10px' }}
-                  >
-                    <option value="month">Month</option>
-                    <option value="week">Week</option>
-                    <option value="day">Day</option>
-                  </select>
+                  <div style={{ position: 'relative', marginLeft: '12px' }}>
+                    <button 
+                      onClick={() => setCalendarDropdownOpen(!calendarDropdownOpen)}
+                      style={{ padding: '6px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', minWidth: '100px', justifyContent: 'space-between', boxShadow: 'var(--shadow-sm)' }}
+                    >
+                      {calendarView.charAt(0).toUpperCase() + calendarView.slice(1)}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    {calendarDropdownOpen && (
+                      <>
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setCalendarDropdownOpen(false)}></div>
+                        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', padding: '4px', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 50, minWidth: '100%' }}>
+                          {['month', 'week', 'day'].map(view => (
+                            <button 
+                              key={view}
+                              onClick={() => { setCalendarView(view as any); setCalendarDropdownOpen(false); }}
+                              style={{ padding: '6px 12px', background: calendarView === view ? 'var(--bg-card)' : 'transparent', border: 'none', borderRadius: '4px', textAlign: 'left', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '13px', fontWeight: 500, transition: 'background 0.2s' }}
+                              onMouseOver={(e) => { if (calendarView !== view) e.currentTarget.style.background = 'var(--bg-deep)' }}
+                              onMouseOut={(e) => { if (calendarView !== view) e.currentTarget.style.background = 'transparent' }}
+                            >
+                              {view.charAt(0).toUpperCase() + view.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <button style={{ padding: '6px 16px', marginLeft: '12px', background: '#ffffff', color: '#1a1a1a', border: '1px solid var(--border)', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     Create
@@ -1147,9 +1166,97 @@ export default function GmailDashboard() {
             <div className="panel-header">
               <h2 className="panel-title">Settings</h2>
             </div>
-            <div style={{ padding: '24px', background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', margin: '24px' }}>
-              <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Preferences</h3>
-              <p style={{ color: 'var(--text-secondary)' }}>Configure your account settings, notifications, and AI assistant behavior here.</p>
+            <div style={{ padding: '0 24px 24px', margin: '0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* Profile Section */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
+                <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Profile</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Manage your public profile and personal details.</p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Display Name</label>
+                    <input type="text" defaultValue={fullName} style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', width: '100%', outline: 'none' }} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Email Address</label>
+                    <input type="email" defaultValue="user@example.com" disabled style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-deep)', color: 'var(--text-secondary)', width: '100%', cursor: 'not-allowed', outline: 'none' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preferences Section */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
+                <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Preferences</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Customize your app experience.</p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>Dark Mode</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Toggle the appearance of the app</div>
+                    </div>
+                    <button 
+                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                      style={{ 
+                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px', 
+                        background: theme === 'dark' ? 'var(--text-primary)' : '#e5e5e5', border: 'none', cursor: 'pointer', transition: 'all 0.2s' 
+                      }}
+                    >
+                      <div style={{ 
+                        position: 'absolute', top: '2px', left: theme === 'dark' ? '22px' : '2px', 
+                        width: '20px', height: '20px', borderRadius: '50%', background: 'var(--bg-deep)', 
+                        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+                      }} />
+                    </button>
+                  </div>
+                  
+                  <div style={{ height: '1px', background: 'var(--border)' }}></div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>Email Notifications</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Receive daily summaries of your inbox</div>
+                    </div>
+                    <button 
+                      style={{ 
+                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px', 
+                        background: 'var(--text-primary)', border: 'none', cursor: 'pointer', transition: 'all 0.2s' 
+                      }}
+                    >
+                      <div style={{ 
+                        position: 'absolute', top: '2px', left: '22px', 
+                        width: '20px', height: '20px', borderRadius: '50%', background: 'var(--bg-deep)', 
+                        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+                      }} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Assistant Section */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
+                <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>AI Assistant</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Configure how your AI agent behaves.</p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Default Action</label>
+                    <select style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', width: '100%', outline: 'none', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b9e%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '10px' }}>
+                      <option>Draft replies automatically</option>
+                      <option>Ask for permission first</option>
+                      <option>Only read emails</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <button style={{ background: 'var(--text-primary)', color: 'var(--bg-deep)', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
+                  Save Changes
+                </button>
+              </div>
+
             </div>
           </section>
         )}

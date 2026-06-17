@@ -66,14 +66,14 @@
 
   --accent: #84cc16;
   --accent-hover: #a3e635;
-  --accent-glow: rgba(132, 204, 22, 0.15);
-  --accent-soft: rgba(132, 204, 22, 0.1);
+  --accent-glow: rgba(255, 255, 255, 0.15);
+  --accent-soft: rgba(255, 255, 255, 0.1);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px var(--accent-glow);
-  --shadow-nav: inset 0 0 0 1px rgba(132, 204, 22, 0.15);
+  --shadow-nav: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 /* ── Layout ────────────────────────────────── */
@@ -381,21 +381,21 @@
   justify-content: center;
   gap: 10px;
   padding: 12px 28px;
-  border: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--bg-deep);
+  background: #ffffff;
+  color: #1a1a1a;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
   font-family: inherit;
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-send:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px var(--accent-glow);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .btn-send:disabled {
@@ -1122,8 +1122,8 @@
 }
 
 .calendar-day-number.active {
-  background: var(--accent);
-  color: var(--bg-deep);
+  background: #ffffff;
+  color: #1a1a1a;
 }
 
 .calendar-events-container {
@@ -1320,8 +1320,8 @@
 }
 
 .time-grid-day-header.today .day-number {
-  background: var(--accent);
-  color: var(--bg-deep);
+  background: #ffffff;
+  color: #1a1a1a;
 }
 
 .time-grid-body-scroll {

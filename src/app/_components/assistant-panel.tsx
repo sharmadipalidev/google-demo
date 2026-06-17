@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import { Mic, Send, Bot, Sparkles, X } from "lucide-react";
+import { Mic, Send, Bot, Sparkles, X, Edit2 } from "lucide-react";
 import { useTheme } from "next-themes";
 
 // Add TypeScript definitions for Web Speech API
@@ -15,20 +15,28 @@ declare global {
 
 export function AssistantPanel() {
   const [prompt, setPrompt] = useState("");
-  const [result, setResult] = useState("");
+  const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
 
   const runPrompt = api.assistant.runPrompt.useMutation({
     onSuccess: (data) => {
-      setResult(data.output);
-      setPrompt("");
+      setMessages(prev => [...prev, { role: "assistant", content: data.output }]);
     },
     onError: (error) => {
-      setResult(error.message);
+      setMessages(prev => [...prev, { role: "assistant", content: "Error: " + error.message }]);
     },
   });
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, runPrompt.isPending]);
 
   const canSubmit = useMemo(() => prompt.trim().length > 0, [prompt]);
 
@@ -56,6 +64,10 @@ export function AssistantPanel() {
         };
 
         recognition.onerror = (event: any) => {
+          if (event.error === 'no-speech') {
+            setIsListening(false);
+            return;
+          }
           console.error("Speech recognition error", event.error);
           setIsListening(false);
         };
@@ -110,24 +122,50 @@ export function AssistantPanel() {
 
       {/* ── Center Content Area ── */}
       <div className="flex-1 overflow-y-auto" style={{ padding: '0 32px 32px 32px' }}>
-        {result ? (
-          <div className="flex flex-col h-full">
-            <div className="flex justify-end mb-4">
+        {messages.length > 0 ? (
+          <div className="flex flex-col h-full gap-6 pb-4">
+            <div className="flex justify-end mb-2 pt-2">
                <button 
-                 onClick={() => setResult("")}
+                 onClick={() => setMessages([])}
                  className="flex items-center gap-1 text-xs text-[#8e8e8e] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
                >
-                 <X className="w-3 h-3" /> Clear Output
+                 <X className="w-3 h-3" /> Clear History
                </button>
             </div>
-            <div className="flex gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green dark:text-white transition-colors">
-                <Bot className="w-5 h-5" />
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${msg.role === 'assistant' ? 'bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green dark:text-white' : 'bg-gray-100 dark:bg-zinc-800/50 text-[#1a1a1a] dark:text-white'}`}>
+                  {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <div className="text-sm font-semibold">U</div>}
+                </div>
+                <div className="flex flex-col group max-w-[85%]">
+                  <div className={`mt-1 rounded-2xl border border-black/5 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-4 text-sm leading-relaxed whitespace-pre-wrap text-[#1a1a1a] dark:text-zinc-300 shadow-sm transition-colors ${msg.role === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
+                    {msg.content}
+                  </div>
+                  {msg.role === 'user' && (
+                    <button 
+                      onClick={() => setPrompt(msg.content)}
+                      className="text-[11px] text-[#8e8e8e] hover:text-[#1a1a1a] dark:hover:text-white mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity self-end flex items-center gap-1"
+                    >
+                      <Edit2 className="w-3 h-3" /> Edit / Reuse
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="mt-1 rounded-2xl rounded-tl-none border border-black/5 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-5 text-sm leading-relaxed whitespace-pre-wrap text-[#1a1a1a] dark:text-zinc-300 shadow-sm transition-colors">
-                {result}
+            ))}
+            
+            {runPrompt.isPending && (
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green dark:text-white transition-colors">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div className="mt-1 rounded-2xl rounded-tl-none border border-black/5 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-5 flex items-center gap-2 h-[42px]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a] dark:bg-white opacity-50 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a] dark:bg-white opacity-50 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a] dark:bg-white opacity-50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
-            </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-center max-w-2xl mx-auto">
@@ -168,8 +206,9 @@ export function AssistantPanel() {
           onSubmit={(e) => {
             e.preventDefault();
             if (canSubmit && !runPrompt.isPending) {
-              setResult(""); // clear old result
+              setMessages(prev => [...prev, { role: "user", content: prompt }]);
               runPrompt.mutate({ prompt });
+              setPrompt("");
             }
           }}
         >
