@@ -106,6 +106,11 @@ export default function GmailDashboard() {
     enabled: activeTab === "labels",
   });
 
+  const categoryCountsQuery = api.gmail.getCategoryCounts.useQuery(undefined, {
+    enabled: activeTab === "inbox",
+    refetchInterval: 5000,
+  });
+
   const draftsQuery = api.gmail.listDrafts.useQuery(
     { maxResults: 15 },
     { enabled: activeTab === "drafts" },
@@ -429,11 +434,13 @@ export default function GmailDashboard() {
             {activeTab === "inbox" && !selectedMessageId && (
               <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 16px', gap: '24px', background: 'var(--bg-elevated)' }}>
                 {[
-                  { id: "primary", label: "Primary", icon: "📬" },
-                  { id: "promotions", label: "Promotions", icon: "🏷️" },
-                  { id: "social", label: "Social", icon: "👥" },
-                  { id: "updates", label: "Updates", icon: "🔔" }
-                ].map((cat) => (
+                  { id: "primary", label: "Primary", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, labelId: "CATEGORY_PERSONAL" },
+                  { id: "promotions", label: "Promotions", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>, labelId: "CATEGORY_PROMOTIONS" },
+                  { id: "social", label: "Social", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>, labelId: "CATEGORY_SOCIAL" },
+                  { id: "updates", label: "Updates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>, labelId: "CATEGORY_UPDATES" }
+                ].map((cat) => {
+                  const count = categoryCountsQuery.data?.[cat.labelId] || 0;
+                  return (
                   <button
                     key={cat.id}
                     onClick={() => setInboxCategory(cat.id as any)}
@@ -454,8 +461,19 @@ export default function GmailDashboard() {
                   >
                     <span>{cat.icon}</span>
                     {cat.label}
+                    <span style={{ 
+                      marginLeft: '4px', 
+                      background: inboxCategory === cat.id ? 'var(--accent)' : '#e5e7eb', 
+                      color: inboxCategory === cat.id ? '#ffffff' : '#4b5563', 
+                      fontSize: '11px', 
+                      fontWeight: 700, 
+                      padding: '2px 6px', 
+                      borderRadius: '12px', 
+                    }}>
+                      {count} new
+                    </span>
                   </button>
-                ))}
+                )})}
               </div>
             )}
 

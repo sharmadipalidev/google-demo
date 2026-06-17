@@ -62,10 +62,29 @@ export const gmailRouter = createTRPCRouter({
       return result;
     }),
 
-  // List all labels
+  // List all labels (does not include messagesUnread)
   listLabels: publicProcedure.query(async () => {
     const result = await tenant.gmail.api.labels.list({});
     return result;
+  }),
+
+  // Get unread counts for specific inbox categories
+  getCategoryCounts: publicProcedure.query(async () => {
+    const categoryIds = ["CATEGORY_PERSONAL", "CATEGORY_PROMOTIONS", "CATEGORY_SOCIAL", "CATEGORY_UPDATES"];
+    const counts: Record<string, number> = {};
+    
+    await Promise.all(
+      categoryIds.map(async (id) => {
+        try {
+          const label = await tenant.gmail.api.labels.get({ id });
+          counts[id] = label.messagesUnread ?? 0;
+        } catch (e) {
+          counts[id] = 0;
+        }
+      })
+    );
+    
+    return counts;
   }),
 
   // List drafts
