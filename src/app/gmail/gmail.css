@@ -1125,7 +1125,7 @@
 
 .calendar-day-number.active {
   background: var(--accent);
-  color: #000;
+  color: var(--bg-deep);
 }
 
 .calendar-events-container {
@@ -1168,7 +1168,7 @@
 
 .calendar-event-chip:hover {
   background: var(--accent);
-  color: #000;
+  color: var(--bg-deep);
   transform: translateY(-1px);
 }
 
@@ -1250,3 +1250,197 @@
 .color-9 { background: #3f51b5; color: #fff; } /* Blueberry */
 .color-10 { background: #0b8043; color: #fff; } /* Basil */
 .color-11 { background: #d50000; color: #fff; } /* Tomato */
+
+/* ── Time Grid View (Week & Day) ───────────────────────── */
+.time-grid-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.time-grid-header {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  overflow-y: scroll;
+}
+.time-grid-header::-webkit-scrollbar {
+  visibility: hidden;
+}
+
+.time-grid-tz-spacer {
+  width: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border);
+}
+
+.time-grid-day-headers {
+  display: flex;
+  flex: 1;
+}
+
+.time-grid-day-header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 16px;
+}
+
+.time-grid-day-header:last-child {
+  border-right: none;
+}
+
+.time-grid-day-header .day-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.time-grid-day-header .day-number {
+  font-size: 16px;
+  color: var(--text-primary);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-left: -6px; /* Offset the padding slightly so the circle aligns visually with the text */
+}
+
+.time-grid-day-header.today .day-name {
+  color: var(--accent);
+}
+
+.time-grid-day-header.today .day-number {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.time-grid-body-scroll {
+  flex: 1;
+  overflow-y: scroll;
+  position: relative;
+}
+
+.time-grid-body {
+  display: flex;
+  min-height: 1440px; /* 24 hours * 60px */
+  position: relative;
+}
+
+.time-grid-hours {
+  width: 60px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  position: relative;
+  background: var(--bg-elevated);
+}
+
+.time-grid-hour-label {
+  height: 60px;
+  position: relative;
+}
+
+.time-grid-hour-label span {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.time-grid-days {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+.time-grid-day-column {
+  flex: 1;
+  position: relative;
+  border-right: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.time-grid-day-column:last-child {
+  border-right: none;
+}
+
+.time-grid-line {
+  height: 60px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.time-grid-event {
+  position: absolute;
+  left: 2px;
+  right: 8px;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  background: var(--accent);
+  color: var(--bg-deep);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.1s;
+}
+
+.time-grid-event:hover {
+  transform: scale(1.02);
+  z-index: 20;
+  filter: brightness(1.1);
+}
+
+.time-grid-event-title {
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.time-grid-event-time {
+  font-size: 10px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.current-time-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--red);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.current-time-dot {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  background: var(--red);
+  border-radius: 50%;
+}

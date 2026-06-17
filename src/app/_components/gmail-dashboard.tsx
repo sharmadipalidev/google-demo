@@ -930,53 +930,144 @@ export default function GmailDashboard() {
 
             {!calendarQuery.isLoading && !calendarQuery.data?.authError && (
               <div className="calendar-view">
-                <div className="calendar-weekdays" style={calendarView === 'day' ? { gridTemplateColumns: '1fr' } : {}}>
-                  {calendarView === "day" ? (
-                    <div className="calendar-weekday">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][currentMonthDate.getDay()]}</div>
-                  ) : (
-                    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                      <div key={day} className="calendar-weekday">{day}</div>
-                    ))
-                  )}
-                </div>
-                <div className="calendar-grid" style={calendarView === 'day' ? { gridTemplateColumns: '1fr' } : {}}>
-                  {calendarView === "month" && Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                    <div key={`empty-${i}`} className="calendar-cell empty"></div>
-                  ))}
-                  {daysToRender.map((dateObj) => {
-                    const dateStr = dateObj.toISOString().split('T')[0];
-                    const dayNum = dateObj.getDate();
-                    const isToday = new Date().toISOString().split('T')[0] === dateStr;
-                    
-                    const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
-                      const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
-                      return evtStartStr === dateStr;
-                    }) || [];
+                {calendarView === "month" ? (
+                  <>
+                    <div className="calendar-weekdays">
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                        <div key={day} className="calendar-weekday">{day}</div>
+                      ))}
+                    </div>
+                    <div className="calendar-grid">
+                      {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                        <div key={`empty-${i}`} className="calendar-cell empty"></div>
+                      ))}
+                      {daysToRender.map((dateObj) => {
+                        const dateStr = dateObj.toISOString().split('T')[0];
+                        const dayNum = dateObj.getDate();
+                        const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                        
+                        const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
+                          const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
+                          return evtStartStr === dateStr;
+                        }) || [];
 
-                    return (
-                      <div key={dateStr} className={`calendar-cell ${isToday ? 'today' : ''}`} onClick={() => openAddEvent(dateStr)}>
-                        <div className="calendar-cell-header">
-                          <span className={`calendar-day-number ${isToday ? 'active' : ''}`}>{dayNum}</span>
-                        </div>
-                        <div className="calendar-events-container">
-                          {dayEvents.map((evt: any) => (
-                            <div key={evt.id} className={`calendar-event-chip color-${evt.colorId || '1'}`} title={evt.summary} onClick={(e) => openEditEvent(evt, e)}>
-                              {evt.start?.dateTime ? (
-                                <span className="calendar-event-time">
-                                  {new Date(evt.start.dateTime as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              ) : null}
-                              <span className="calendar-event-title">{evt.summary || "(No Title)"}</span>
+                        return (
+                          <div key={dateStr} className={`calendar-cell ${isToday ? 'today' : ''}`} onClick={() => openAddEvent(dateStr)}>
+                            <div className="calendar-cell-header">
+                              <span className={`calendar-day-number ${isToday ? 'active' : ''}`}>{dayNum}</span>
+                            </div>
+                            <div className="calendar-events-container">
+                              {dayEvents.map((evt: any) => (
+                                <div key={evt.id} className={`calendar-event-chip color-${evt.colorId || '1'}`} title={evt.summary} onClick={(e) => openEditEvent(evt, e)}>
+                                  {evt.start?.dateTime ? (
+                                    <span className="calendar-event-time">
+                                      {new Date(evt.start.dateTime as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  ) : null}
+                                  <span className="calendar-event-title">{evt.summary || "(No Title)"}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
+                        <div key={`empty-end-${i}`} className="calendar-cell empty"></div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="time-grid-container">
+                    <div className="time-grid-header">
+                      <div className="time-grid-tz-spacer">GMT+00</div>
+                      <div className="time-grid-day-headers">
+                        {daysToRender.map((dateObj) => {
+                          const dateStr = dateObj.toISOString().split('T')[0];
+                          const dayNum = dateObj.getDate();
+                          const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                          return (
+                            <div key={dateStr} className={`time-grid-day-header ${isToday ? 'today' : ''}`}>
+                              <span className="day-name">{["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dateObj.getDay()]}</span>
+                              <span className={`day-number ${isToday ? 'active' : ''}`}>{dayNum}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="time-grid-body-scroll" ref={(el) => { if (el && !el.dataset.scrolled) { el.scrollTop = (new Date().getHours() * 60) - 100; el.dataset.scrolled = "true"; } }}>
+                      <div className="time-grid-body">
+                        <div className="time-grid-hours">
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <div key={`hour-${i}`} className="time-grid-hour-label">
+                              <span>{i === 0 ? '' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}</span>
                             </div>
                           ))}
                         </div>
+                        <div className="time-grid-days">
+                          {daysToRender.map((dateObj) => {
+                            const dateStr = dateObj.toISOString().split('T')[0];
+                            const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
+                              const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
+                              return evtStartStr === dateStr;
+                            }) || [];
+
+                            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+                            return (
+                              <div key={dateStr} className="time-grid-day-column" onClick={() => openAddEvent(dateStr)}>
+                                {Array.from({ length: 24 }).map((_, i) => (
+                                  <div key={`grid-line-${i}`} className="time-grid-line"></div>
+                                ))}
+                                
+                                {isToday && (
+                                  <div className="current-time-line" style={{ top: `${(new Date().getHours() * 60 + new Date().getMinutes())}px` }}>
+                                    <div className="current-time-dot"></div>
+                                  </div>
+                                )}
+
+                                {dayEvents.map((evt: any) => {
+                                  const isAllDay = !evt.start?.dateTime;
+                                  if (isAllDay) return null;
+                                  
+                                  const startDate = new Date(evt.start.dateTime);
+                                  const endDate = new Date(evt.end?.dateTime || evt.start.dateTime);
+                                  
+                                  const startMin = startDate.getHours() * 60 + startDate.getMinutes();
+                                  const durationMin = Math.max((endDate.getTime() - startDate.getTime()) / 60000, 30);
+                                  
+                                  const formatTime = (d: Date) => {
+                                    let hours = d.getHours();
+                                    const mins = d.getMinutes();
+                                    const ampm = hours >= 12 ? 'pm' : 'am';
+                                    hours = hours % 12;
+                                    hours = hours ? hours : 12;
+                                    return `${hours}:${mins < 10 ? '0'+mins : mins}${ampm}`;
+                                  };
+
+                                  return (
+                                    <div 
+                                      key={evt.id} 
+                                      className="time-grid-event"
+                                      style={{ top: `${startMin}px`, height: `${durationMin}px` }}
+                                      title={evt.summary} 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openEditEvent(evt, e);
+                                      }}
+                                    >
+                                      <div className="time-grid-event-title">{evt.summary || "(No Title)"}</div>
+                                      <div className="time-grid-event-time">{formatTime(startDate)} – {formatTime(endDate)}</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    );
-                  })}
-                  {calendarView === "month" && Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
-                    <div key={`empty-end-${i}`} className="calendar-cell empty"></div>
-                  ))}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
