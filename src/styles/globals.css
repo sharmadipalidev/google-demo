@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand-green: #9fff00;
   --color-bg-base: #EDEEF5;
@@ -9,6 +11,15 @@
 
 @layer base {
   body {
-    @apply bg-bg-base text-zinc-900 font-sans antialiased;
+    @apply bg-bg-base dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-100 font-sans antialiased transition-colors duration-300;
   }
+}
+
+html, body, * {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari and Opera */
 }

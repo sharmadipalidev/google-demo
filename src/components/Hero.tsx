@@ -2,12 +2,15 @@
 
 import { Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import Link from "next/link";
 
 export default function Hero() {
+  const { isSignedIn } = useUser();
   return (
-    <section className="relative min-h-[110vh] sm:min-h-[140vh] w-full flex flex-col items-center justify-start overflow-hidden bg-bg-base">
+    <section className="relative min-h-[110vh] sm:min-h-[140vh] w-full flex flex-col items-center justify-start overflow-hidden bg-bg-base dark:bg-[#0a0a0a] transition-colors duration-300">
       <div className="absolute top-[10vh] sm:top-[12vh] left-0 w-full h-[95vh] sm:h-[120vh] z-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-24 sm:h-32 bg-gradient-to-b from-bg-base to-transparent z-10"></div>
+        <div className="absolute top-0 left-0 w-full h-24 sm:h-32 bg-gradient-to-b from-bg-base dark:from-[#0a0a0a] to-transparent z-10 transition-colors duration-300"></div>
         <video
           autoPlay
           loop
@@ -27,25 +30,35 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.05 }}
             className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-medium leading-[1.1] tracking-tight"
           >
-            <span className="text-[#1a1a1a]">Your Workspace,</span><br />
-            <span className="text-[#8e8e8e]">Supercharged by AI</span>
+            <span className="text-[#1a1a1a] dark:text-white transition-colors">Your Workspace,</span><br />
+            <span className="text-[#8e8e8e] dark:text-zinc-400 transition-colors">Supercharged by AI</span>
           </motion.h1>
 
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="mt-8 bg-white rounded-[6px] border border-black/[0.05] p-1 pl-4 flex items-center shadow-sm w-full max-w-[400px]"
+            className="mt-8 bg-white dark:bg-zinc-900 rounded-[6px] border border-black/[0.05] dark:border-white/10 p-1 pl-4 flex items-center shadow-sm w-full max-w-[400px] transition-colors"
           >
             <input
               placeholder="Enter you gmail to get started.."
-              className="flex-1 bg-transparent border-none outline-none text-[#1a1a1a] placeholder:text-[#8e8e8e] text-sm"
+              className="flex-1 bg-transparent border-none outline-none text-[#1a1a1a] dark:text-white placeholder:text-[#8e8e8e] dark:placeholder:text-zinc-500 text-sm"
             />
-            <button className="bg-[#1a1a1a] text-white w-9 h-9 rounded-full relative flex items-center justify-center shrink-0">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 6H11M11 6L6 1M11 6L6 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {isSignedIn ? (
+              <Link href="/gmail" className="bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-zinc-200 transition-colors w-9 h-9 rounded-full relative flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 6H11M11 6L6 1M11 6L6 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            ) : (
+              <SignInButton mode="modal">
+                <button className="bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-zinc-200 transition-colors w-9 h-9 rounded-full relative flex items-center justify-center shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 6H11M11 6L6 1M11 6L6 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </SignInButton>
+            )}
           </motion.div>
 
           <motion.p
