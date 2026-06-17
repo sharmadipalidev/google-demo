@@ -50,30 +50,30 @@
 }
 
 .dark {
-  --bg-deep: #0a0a0f;
-  --bg-surface: #111118;
-  --bg-card: #16161f;
-  --bg-card-hover: #1c1c28;
-  --bg-elevated: #1e1e2a;
+  --bg-deep: #0a0a0a;
+  --bg-surface: #111111;
+  --bg-card: #171717;
+  --bg-card-hover: #1e1e1e;
+  --bg-elevated: #222222;
 
   --border: rgba(255, 255, 255, 0.06);
-  --border-focus: rgba(99, 102, 241, 0.5);
+  --border-focus: rgba(163, 230, 53, 0.5);
   --border-subtle: rgba(255, 255, 255, 0.03);
 
-  --text-primary: #f0f0f5;
-  --text-secondary: #8b8b9e;
-  --text-muted: #5a5a70;
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
 
-  --accent: #6366f1;
-  --accent-hover: #7c7ff7;
-  --accent-glow: rgba(99, 102, 241, 0.15);
-  --accent-soft: rgba(99, 102, 241, 0.08);
+  --accent: #84cc16;
+  --accent-hover: #a3e635;
+  --accent-glow: rgba(132, 204, 22, 0.15);
+  --accent-soft: rgba(132, 204, 22, 0.1);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px var(--accent-glow);
-  --shadow-nav: inset 0 0 0 1px rgba(99, 102, 241, 0.15);
+  --shadow-nav: inset 0 0 0 1px rgba(132, 204, 22, 0.15);
 }
 
 /* ── Layout ────────────────────────────────── */
@@ -1125,7 +1125,7 @@
 
 .calendar-day-number.active {
   background: var(--accent);
-  color: #fff;
+  color: #000;
 }
 
 .calendar-events-container {
@@ -1152,8 +1152,8 @@
 
 .calendar-event-chip {
   background: var(--accent-soft);
-  color: var(--accent-hover);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: var(--accent);
+  border: 1px solid var(--border-focus);
   border-radius: 4px;
   padding: 4px 6px;
   font-size: 11px;
@@ -1168,7 +1168,7 @@
 
 .calendar-event-chip:hover {
   background: var(--accent);
-  color: #fff;
+  color: #000;
   transform: translateY(-1px);
 }
 

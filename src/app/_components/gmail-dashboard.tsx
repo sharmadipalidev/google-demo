@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { api } from "@/trpc/react";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { useTheme } from "next-themes";
 
 // ─── Helpers ──────────────────────────────────────────────
 function extractHeader(
@@ -13,17 +14,24 @@ function extractHeader(
   return headers?.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? "";
 }
 
-function timeAgo(date: string | number | Date | null | undefined): string {
+function formatExactDate(date: string | number | Date | null | undefined): string {
   if (!date) return "";
-  const ms = Date.now() - new Date(date as string).getTime();
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  let d: Date;
+  if (typeof date === 'string' && /^\d+$/.test(date)) {
+    d = new Date(parseInt(date, 10));
+  } else {
+    d = new Date(date);
+  }
+  
+  if (isNaN(d.getTime())) return "";
+
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 
 function decodeBase64URL(str: string) {
@@ -86,12 +94,25 @@ export default function GmailDashboard() {
   const { user } = useUser();
   const fullName = user?.fullName || user?.firstName || "User";
 
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const [activeTab, setActiveTab] = useState<Tab>("inbox");
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [isAgentic, setIsAgentic] = useState(false);
   const [inboxCategory, setInboxCategory] = useState<"primary" | "promotions" | "social" | "updates">("primary");
+
+  // ── Pagination state
+  const [pageTokens, setPageTokens] = useState<string[]>([]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+  useEffect(() => {
+    setPageTokens([]);
+    setCurrentPageIndex(0);
+  }, [activeTab, inboxCategory, searchQuery]);
 
   // ── Compose form state
   const [composeTo, setComposeTo] = useState("");
@@ -111,7 +132,7 @@ export default function GmailDashboard() {
   }, [activeTab, inboxCategory]);
 
   const messagesQuery = api.gmail.listMessages.useQuery(
-    { maxResults: 15, q: searchQuery || defaultQuery || undefined },
+    { maxResults: 15, q: searchQuery || defaultQuery || undefined, pageToken: pageTokens[currentPageIndex] || undefined },
     { enabled: ["inbox", "starred", "sent", "spam", "trash"].includes(activeTab), refetchInterval: 3000 },
   );
 
@@ -134,17 +155,43 @@ export default function GmailDashboard() {
   });
 
   // ── Calendar View State
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
+  const calYear = currentMonthDate.getFullYear();
+  const calMonth = currentMonthDate.getMonth();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(calYear, calMonth, 1).getDay();
+
+  const daysToRender = useMemo(() => {
+    if (calendarView === "month") {
+      return Array.from({ length: daysInMonth }).map((_, i) => new Date(calYear, calMonth, i + 1));
+    } else if (calendarView === "week") {
+      const startOfWeek = new Date(currentMonthDate);
+      startOfWeek.setDate(currentMonthDate.getDate() - currentMonthDate.getDay());
+      return Array.from({ length: 7 }).map((_, i) => {
+        const d = new Date(startOfWeek);
+        d.setDate(startOfWeek.getDate() + i);
+        return d;
+      });
+    } else {
+      return [currentMonthDate];
+    }
+  }, [calendarView, currentMonthDate, calYear, calMonth, daysInMonth]);
+
   const timeMin = useMemo(() => {
-    const d = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+    if (daysToRender.length === 0) return new Date().toISOString();
+    const d = new Date(daysToRender[0]);
+    d.setHours(0,0,0,0);
     return d.toISOString();
-  }, [currentMonthDate]);
+  }, [daysToRender]);
 
   const timeMax = useMemo(() => {
-    const d = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0, 23, 59, 59);
+    if (daysToRender.length === 0) return new Date().toISOString();
+    const d = new Date(daysToRender[daysToRender.length - 1]);
+    d.setHours(23,59,59,999);
     return d.toISOString();
-  }, [currentMonthDate]);
+  }, [daysToRender]);
 
   const calendarQuery = api.calendar.listEvents.useQuery(
     { maxResults: 100, q: searchQuery || undefined, timeMin, timeMax },
@@ -152,16 +199,19 @@ export default function GmailDashboard() {
   );
 
   // ── Calendar Grid Logic
-  const calYear = currentMonthDate.getFullYear();
-  const calMonth = currentMonthDate.getMonth();
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const firstDayOfMonth = new Date(calYear, calMonth, 1).getDay();
-  
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const currentMonthName = monthNames[calMonth];
 
-  const handlePrevMonth = () => setCurrentMonthDate(new Date(calYear, calMonth - 1, 1));
-  const handleNextMonth = () => setCurrentMonthDate(new Date(calYear, calMonth + 1, 1));
+  const handlePrev = () => {
+    if (calendarView === "month") setCurrentMonthDate(new Date(calYear, calMonth - 1, currentMonthDate.getDate()));
+    else if (calendarView === "week") setCurrentMonthDate(new Date(calYear, calMonth, currentMonthDate.getDate() - 7));
+    else setCurrentMonthDate(new Date(calYear, calMonth, currentMonthDate.getDate() - 1));
+  };
+  const handleNext = () => {
+    if (calendarView === "month") setCurrentMonthDate(new Date(calYear, calMonth + 1, currentMonthDate.getDate()));
+    else if (calendarView === "week") setCurrentMonthDate(new Date(calYear, calMonth, currentMonthDate.getDate() + 7));
+    else setCurrentMonthDate(new Date(calYear, calMonth, currentMonthDate.getDate() + 1));
+  };
   const handleToday = () => setCurrentMonthDate(new Date());
 
   // ── Event Modal State
@@ -301,7 +351,7 @@ export default function GmailDashboard() {
             </svg>
           </div>
           <div>
-            <h1 className="brand-title" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>NeuroSync</h1>
+            <h1 className="brand-title" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>neurosync</h1>
           </div>
         </div>
 
@@ -434,18 +484,47 @@ export default function GmailDashboard() {
                   }}
                 />
               </div>
-              <button className="btn-refresh" onClick={() => messagesQuery.refetch()} id="btn-refresh-inbox">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                  <path d="M21 2v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 12a9 9 0 0115.36-6.36L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 22v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M21 12a9 9 0 01-15.36 6.36L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
+                <button
+                  disabled={currentPageIndex === 0}
+                  onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
+                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: currentPageIndex === 0 ? 0.5 : 1, color: 'var(--text-primary)' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button
+                  disabled={!messagesQuery.data?.nextPageToken}
+                  onClick={() => {
+                    if (messagesQuery.data?.nextPageToken) {
+                      const nextToken = messagesQuery.data.nextPageToken;
+                      setPageTokens(prev => {
+                        const newTokens = [...prev];
+                        newTokens[currentPageIndex + 1] = nextToken;
+                        return newTokens;
+                      });
+                      setCurrentPageIndex(p => p + 1);
+                    }
+                  }}
+                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: !messagesQuery.data?.nextPageToken ? 0.5 : 1, color: 'var(--text-primary)' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+              <button
+                className="btn-refresh"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                title="Toggle Theme"
+              >
+                {mounted && theme === 'dark' ? (
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                )}
               </button>
             </div>
 
             {activeTab === "inbox" && !selectedMessageId && (
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 16px', gap: '24px', background: 'var(--bg-elevated)' }}>
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 16px', gap: '24px', background: 'transparent' }}>
                 {[
                   { id: "primary", label: "Primary", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, labelId: "CATEGORY_PERSONAL" },
                   { id: "promotions", label: "Promotions", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>, labelId: "CATEGORY_PROMOTIONS" },
@@ -515,7 +594,7 @@ export default function GmailDashboard() {
                         <span className="msg-sender">
                           {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
                         </span>
-                        <span className="msg-time">{timeAgo(msg.internalDate)}</span>
+                        <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
                       </div>
                       <div className="msg-subject">
                         {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
@@ -780,16 +859,28 @@ export default function GmailDashboard() {
           <section className="panel calendar-panel" id="panel-calendar">
             <div className="calendar-toolbar">
               <div className="calendar-toolbar-left">
-                <h2 className="calendar-month-title">{currentMonthName} {calYear}</h2>
+                <h2 className="calendar-month-title">
+                  {calendarView === "month" && `${currentMonthName} ${calYear}`}
+                  {calendarView === "week" && `${monthNames[daysToRender[0].getMonth()]} ${daysToRender[0].getFullYear()}`}
+                  {calendarView === "day" && `${monthNames[currentMonthDate.getMonth()]} ${currentMonthDate.getDate()}, ${currentMonthDate.getFullYear()}`}
+                </h2>
                 <div className="calendar-nav-buttons">
-                  <button className="btn-icon" onClick={handlePrevMonth}>
+                  <button className="btn-icon" onClick={handlePrev}>
                     <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
-                  <button className="btn-icon" onClick={handleNextMonth}>
+                  <button className="btn-icon" onClick={handleNext}>
                     <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                   <button className="btn-today" onClick={handleToday}>Today</button>
-                  <button className="btn-send" style={{ padding: '8px 16px', marginLeft: '12px' }} onClick={() => openAddEvent()}>+ Create</button>
+                  <div style={{ marginLeft: '12px', display: 'flex', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', padding: '4px', gap: '4px' }}>
+                    <button style={{ padding: '4px 12px', background: calendarView === 'month' ? 'var(--bg-card)' : 'transparent', border: calendarView === 'month' ? '1px solid var(--border)' : '1px solid transparent', borderRadius: '4px', cursor: 'pointer', fontWeight: calendarView === 'month' ? 600 : 500, color: calendarView === 'month' ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s' }} onClick={() => setCalendarView('month')}>Month</button>
+                    <button style={{ padding: '4px 12px', background: calendarView === 'week' ? 'var(--bg-card)' : 'transparent', border: calendarView === 'week' ? '1px solid var(--border)' : '1px solid transparent', borderRadius: '4px', cursor: 'pointer', fontWeight: calendarView === 'week' ? 600 : 500, color: calendarView === 'week' ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s' }} onClick={() => setCalendarView('week')}>Week</button>
+                    <button style={{ padding: '4px 12px', background: calendarView === 'day' ? 'var(--bg-card)' : 'transparent', border: calendarView === 'day' ? '1px solid var(--border)' : '1px solid transparent', borderRadius: '4px', cursor: 'pointer', fontWeight: calendarView === 'day' ? 600 : 500, color: calendarView === 'day' ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s' }} onClick={() => setCalendarView('day')}>Day</button>
+                  </div>
+                  <button style={{ padding: '6px 16px', marginLeft: '12px', background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Create
+                  </button>
                 </div>
               </div>
               <div className="search-bar calendar-search">
@@ -808,13 +899,16 @@ export default function GmailDashboard() {
                   }}
                 />
               </div>
-              <button className="btn-refresh" onClick={() => calendarQuery.refetch()} id="btn-refresh-calendar">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                  <path d="M21 2v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 12a9 9 0 0115.36-6.36L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 22v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M21 12a9 9 0 01-15.36 6.36L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <button
+                className="btn-icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                title="Toggle Theme"
+              >
+                {mounted && theme === 'dark' ? (
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                )}
               </button>
             </div>
 
@@ -832,18 +926,22 @@ export default function GmailDashboard() {
 
             {!calendarQuery.isLoading && !calendarQuery.data?.authError && (
               <div className="calendar-view">
-                <div className="calendar-weekdays">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="calendar-weekday">{day}</div>
-                  ))}
+                <div className="calendar-weekdays" style={calendarView === 'day' ? { gridTemplateColumns: '1fr' } : {}}>
+                  {calendarView === "day" ? (
+                    <div className="calendar-weekday">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][currentMonthDate.getDay()]}</div>
+                  ) : (
+                    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                      <div key={day} className="calendar-weekday">{day}</div>
+                    ))
+                  )}
                 </div>
-                <div className="calendar-grid">
-                  {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                <div className="calendar-grid" style={calendarView === 'day' ? { gridTemplateColumns: '1fr' } : {}}>
+                  {calendarView === "month" && Array.from({ length: firstDayOfMonth }).map((_, i) => (
                     <div key={`empty-${i}`} className="calendar-cell empty"></div>
                   ))}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const dayNum = i + 1;
-                    const dateStr = new Date(calYear, calMonth, dayNum).toISOString().split('T')[0];
+                  {daysToRender.map((dateObj) => {
+                    const dateStr = dateObj.toISOString().split('T')[0];
+                    const dayNum = dateObj.getDate();
                     const isToday = new Date().toISOString().split('T')[0] === dateStr;
                     
                     const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
@@ -852,7 +950,7 @@ export default function GmailDashboard() {
                     }) || [];
 
                     return (
-                      <div key={dayNum} className={`calendar-cell ${isToday ? 'today' : ''}`} onClick={() => openAddEvent(dateStr)}>
+                      <div key={dateStr} className={`calendar-cell ${isToday ? 'today' : ''}`} onClick={() => openAddEvent(dateStr)}>
                         <div className="calendar-cell-header">
                           <span className={`calendar-day-number ${isToday ? 'active' : ''}`}>{dayNum}</span>
                         </div>
@@ -871,7 +969,7 @@ export default function GmailDashboard() {
                       </div>
                     );
                   })}
-                  {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
+                  {calendarView === "month" && Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
                     <div key={`empty-end-${i}`} className="calendar-cell empty"></div>
                   ))}
                 </div>
