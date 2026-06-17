@@ -6,6 +6,8 @@ import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
 import { Bot, Calendar, Mail, Zap, ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import Pricing from "@/components/Pricing";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
@@ -111,7 +113,11 @@ export default function Home() {
             </p>
           </motion.div>
         </div>
+        
+        <Pricing />
       </main>
+      
+      <Footer />
     </div>
   );
 }
