@@ -2,32 +2,147 @@
 
 import Link from "next/link";
 
+// Custom SVG Icons for brands since lucide-react removed them
+const TwitterIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+  </svg>
+);
+
+const GithubIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+    <path d="M9 18c-4.51 2-5-2-7-2"></path>
+  </svg>
+);
+
+const LinkedinIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </svg>
+);
+
+const footerLinks = {
+  product: [
+    { name: "Features", href: "#features" },
+    { name: "Pricing", href: "#pricing" },
+    { name: "Integrations", href: "#" },
+    { name: "Changelog", href: "#" },
+  ],
+  company: [
+    { name: "About Us", href: "#" },
+    { name: "Careers", href: "#" },
+    { name: "Blog", href: "#" },
+    { name: "Contact", href: "#" },
+  ],
+  legal: [
+    { name: "Privacy Policy", href: "#" },
+    { name: "Terms of Service", href: "#" },
+    { name: "Cookie Policy", href: "#" },
+  ],
+};
+
+const socialLinks = [
+  { name: "Twitter", icon: TwitterIcon, href: "#" },
+  { name: "GitHub", icon: GithubIcon, href: "#" },
+  { name: "LinkedIn", icon: LinkedinIcon, href: "#" },
+];
+
 export default function Footer() {
- return (
- <footer className="bg-white/30 dark:bg-[#0a0a0a]/30 backdrop-blur-md border-t border-black/5 dark:border-white/5 mt-32 relative z-10 transition-colors">
- <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
- <div className="flex justify-center space-x-6 md:order-2">
- {/* Social icons */}
- <Link href="#" className="text-[#8e8e8e] dark:text-zinc-500 hover:text-[#1a1a1a] dark:hover:text-white transition-colors">
- <span className="sr-only">Twitter</span>
- <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
- <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
- </svg>
- </Link>
- <Link href="#" className="text-[#8e8e8e] dark:text-zinc-500 hover:text-[#1a1a1a] dark:hover:text-white transition-colors">
- <span className="sr-only">GitHub</span>
- <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
- <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
- </svg>
- </Link>
- </div>
- <div className="mt-8 md:order-1 md:mt-0 flex items-center gap-2 justify-center md:justify-start">
- <img src="/logo.svg" alt="neurosync logo" className="w-5 h-5 object-contain dark:invert" />
- <p className="text-center text-xs leading-5 text-[#8e8e8e] dark:text-zinc-500 transition-colors">
- &copy; 2026 neurosync, Inc. All rights reserved.
- </p>
- </div>
- </div>
- </footer>
- );
+  return (
+    <footer className="bg-white border-t border-black/[0.05] pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 mb-16">
+          
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-[#1a1a1a]"
+              >
+                <path d="M12 2C10.3431 2 9 3.34315 9 5C9 6.65685 10.3431 8 12 8C13.6569 8 15 6.65685 15 5C15 3.34315 13.6569 2 12 2Z" fill="currentColor" />
+                <path d="M12 16C10.3431 16 9 17.3431 9 19C9 20.6569 10.3431 22 12 22C13.6569 22 15 20.6569 15 19C15 17.3431 13.6569 16 12 16Z" fill="currentColor" />
+                <path d="M5 9C3.34315 9 2 10.3431 2 12C2 13.6569 3.34315 15 5 15C6.65685 15 8 13.6569 8 12C8 10.3431 6.65685 9 5 9Z" fill="currentColor" />
+                <path d="M19 9C17.3431 9 16 10.3431 16 12C16 13.6569 17.3431 15 19 15C20.6569 15 22 13.6569 22 12C22 10.3431 20.6569 9 19 9Z" fill="currentColor" />
+                <circle cx="12" cy="12" r="2" fill="currentColor" />
+              </svg>
+              <span className="font-display font-semibold text-xl tracking-tight text-[#1a1a1a]">neurosync</span>
+            </Link>
+            <p className="text-[#8e8e8e] text-sm max-w-sm mb-6 leading-relaxed">
+              Supercharge your workspace with conversational AI. Manage emails, schedule meetings, and automate workflows effortlessly.
+            </p>
+            <div className="flex gap-4">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  className="w-10 h-10 rounded-full bg-[#f1f1f1] flex items-center justify-center text-[#4b4b4b] hover:bg-brand-green hover:text-black transition-colors"
+                  aria-label={social.name}
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-[#1a1a1a] mb-6">Product</h4>
+            <ul className="space-y-4">
+              {footerLinks.product.map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-[#8e8e8e] hover:text-[#1a1a1a] text-sm transition-colors">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-[#1a1a1a] mb-6">Company</h4>
+            <ul className="space-y-4">
+              {footerLinks.company.map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-[#8e8e8e] hover:text-[#1a1a1a] text-sm transition-colors">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-[#1a1a1a] mb-6">Legal</h4>
+            <ul className="space-y-4">
+              {footerLinks.legal.map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-[#8e8e8e] hover:text-[#1a1a1a] text-sm transition-colors">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+        </div>
+
+        <div className="border-t border-black/[0.05] pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-[#8e8e8e] text-sm">
+            © {new Date().getFullYear()} Neurosync Inc. All rights reserved.
+          </p>
+          <div className="flex items-center gap-2 text-sm text-[#8e8e8e]">
+            <span>Designed with</span>
+            <span className="text-red-500">♥</span>
+            <span>for productivity.</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
 }

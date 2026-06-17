@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import { Mic, Send, Bot, Sparkles, X } from "lucide-react";
+import { useTheme } from "next-themes";
 
 // Add TypeScript definitions for Web Speech API
 declare global {
@@ -17,6 +18,7 @@ export function AssistantPanel() {
   const [result, setResult] = useState("");
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const { theme, setTheme } = useTheme();
 
   const runPrompt = api.assistant.runPrompt.useMutation({
     onSuccess: (data) => {
@@ -84,26 +86,30 @@ export function AssistantPanel() {
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-white dark:bg-[#0a0a0a] text-[#1a1a1a] dark:text-white transition-colors duration-300">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       {/* ── Top Header Area ── */}
-      <div className="flex flex-col gap-2 p-8 border-b border-black/5 dark:border-white/5 transition-colors">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 rounded-full bg-[#1a1a1a]/5 dark:bg-white/10 px-3 py-1 text-xs font-medium text-[#1a1a1a] dark:text-white transition-colors">
-            <Bot className="w-4 h-4 text-brand-green dark:text-white" />
-            AI operator
-          </div>
+      <div style={{ padding: '28px 32px 24px 32px' }}>
+        <div className="panel-header" style={{ marginBottom: 0 }}>
+          <h2 className="panel-title">AI Assistant</h2>
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="btn-refresh"
+            title="Toggle Theme"
+          >
+            {theme === 'dark' ? (
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            )}
+          </button>
         </div>
-        
-        <div className="flex items-end justify-between mt-2">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#1a1a1a] dark:text-white transition-colors">How can neurosync help?</h1>
-            <p className="text-sm text-[#8e8e8e] dark:text-zinc-500 mt-1 transition-colors">Control your workspace workflows with natural language.</p>
-          </div>
-        </div>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+          Control your workspace workflows with natural language.
+        </p>
       </div>
 
       {/* ── Center Content Area ── */}
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 overflow-y-auto" style={{ padding: '0 32px 32px 32px' }}>
         {result ? (
           <div className="flex flex-col h-full">
             <div className="flex justify-end mb-4">
@@ -139,7 +145,7 @@ export function AssistantPanel() {
                 <button
                   key={idx}
                   onClick={() => setPrompt(suggestion)}
-                  className="flex items-center justify-center text-center rounded-xl border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-900 p-4 text-sm text-[#8e8e8e] dark:text-zinc-400 transition-colors hover:border-brand-green dark:hover:border-white hover:text-[#1a1a1a] dark:hover:text-white shadow-sm"
+                  className="flex items-center justify-center text-center rounded-xl border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-900 p-4 text-sm text-[#8e8e8e] dark:text-zinc-400 transition-colors hover:border-black/20 dark:hover:border-white hover:text-[#1a1a1a] dark:hover:text-white shadow-sm"
                 >
                   {suggestion}
                 </button>
@@ -150,7 +156,7 @@ export function AssistantPanel() {
       </div>
 
       {/* ── Bottom Input Area ── */}
-      <div className="p-8 pt-4">
+      <div style={{ padding: '24px 32px', borderTop: '1px solid var(--border)', background: 'var(--bg-deep)' }}>
         <div className="flex justify-end mb-2">
           <span className="text-[11px] font-medium text-[#8e8e8e] dark:text-zinc-600 transition-colors">
             {prompt.length} / 500
@@ -167,7 +173,7 @@ export function AssistantPanel() {
             }
           }}
         >
-          <div className={`relative flex items-center rounded-2xl border bg-white dark:bg-zinc-900 px-2 py-2 shadow-sm transition-all ${isListening ? 'border-brand-green ring-1 ring-brand-green dark:border-white dark:ring-white' : 'border-black/5 dark:border-white/5 focus-within:border-brand-green dark:focus-within:border-white focus-within:ring-1 focus-within:ring-brand-green dark:focus-within:ring-white'}`}>
+          <div className={`relative flex items-center rounded-2xl border bg-white dark:bg-zinc-900 px-2 py-2 shadow-sm transition-all ${isListening ? 'border-black/20 ring-1 ring-black/20 dark:border-white dark:ring-white' : 'border-black/5 dark:border-white/5 focus-within:border-black/20 dark:focus-within:border-white focus-within:ring-1 focus-within:ring-black/20 dark:focus-within:ring-white'}`}>
             <input
               type="text"
               value={prompt}
@@ -182,7 +188,7 @@ export function AssistantPanel() {
               <button
                 type="button"
                 onClick={toggleListening}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${isListening ? 'bg-brand-green/20 dark:bg-white/20 text-brand-green dark:text-white animate-pulse' : 'text-[#8e8e8e] dark:text-zinc-500 hover:text-[#1a1a1a] dark:hover:text-white'}`}
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${isListening ? 'bg-black/10 dark:bg-white/20 text-[#1a1a1a] dark:text-white animate-pulse' : 'text-[#8e8e8e] dark:text-zinc-500 hover:text-[#1a1a1a] dark:hover:text-white'}`}
               >
                 <Mic className="w-4 h-4" />
               </button>

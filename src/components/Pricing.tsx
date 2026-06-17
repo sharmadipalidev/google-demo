@@ -1,93 +1,163 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 
 const tiers = [
-    {
-        name: "Basic",
-        price: "Free",
-        description: "Perfect for individuals getting started with AI.",
-        features: ["100 AI queries per month", "Basic Gmail integration", "Community support"],
-        buttonText: "Get Started",
-        popular: false,
-    },
-    {
-        name: "Pro",
-        price: "$19",
-        period: "/month",
-        description: "Ideal for professionals needing unlimited power.",
-        features: ["Unlimited AI queries", "Advanced Calendar sync", "Priority support", "Custom workflows"],
-        buttonText: "Upgrade to Pro",
-        popular: true,
-    },
-    {
-        name: "Enterprise",
-        price: "Custom",
-        description: "For teams and organizations requiring scale.",
-        features: ["Dedicated account manager", "SSO integration", "Custom AI training", "99.9% uptime SLA"],
-        buttonText: "Contact Sales",
-        popular: false,
-    },
+  {
+    name: "Starter",
+    price: "Free",
+    description: "Perfect for individuals looking to explore basic AI workflows.",
+    features: [
+      "Smart Email Triage",
+      "Basic Calendar Integration",
+      "Up to 50 AI queries/month",
+      "Standard Support",
+    ],
+    cta: "Get Started",
+    highlighted: false,
+  },
+  {
+    name: "Pro",
+    price: "$19",
+    period: "/month",
+    description: "For power users who need advanced automation and unlimited access.",
+    features: [
+      "Everything in Starter",
+      "Unlimited AI queries",
+      "Advanced Multi-app Workflows",
+      "Priority Support",
+      "Custom AI Context",
+    ],
+    cta: "Start Free Trial",
+    highlighted: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    description: "For teams requiring secure, scalable, and custom AI solutions.",
+    features: [
+      "Everything in Pro",
+      "Enterprise-grade Security",
+      "Dedicated Account Manager",
+      "Custom API Integrations",
+      "Team Analytics",
+    ],
+    cta: "Contact Sales",
+    highlighted: false,
+  },
 ];
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
 export default function Pricing() {
-    return (
-        <section className="py-24 sm:py-32 relative z-10 transition-colors">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-display font-semibold tracking-tight text-[#1a1a1a] dark:text-white sm:text-5xl transition-colors">Simple, transparent pricing</h2>
-                    <p className="mt-4 text-lg leading-8 text-[#8e8e8e] dark:text-zinc-400 transition-colors">
-                        Choose the plan that fits your workflow. Upgrade anytime as your needs grow.
-                    </p>
+  return (
+    <section id="pricing" className="py-24 bg-bg-base relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <motion.h2
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-[#4b4b4b] font-bold tracking-widest uppercase text-sm mb-3"
+          >
+            Pricing
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-3xl md:text-5xl font-display font-medium text-[#1a1a1a] leading-tight"
+          >
+            Simple, transparent pricing
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-4 text-[#8e8e8e] text-lg max-w-2xl mx-auto"
+          >
+            Choose the plan that best fits your workflow needs. No hidden fees.
+          </motion.p>
+        </div>
+
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center"
+        >
+          {tiers.map((tier, index) => (
+            <motion.div
+              key={index}
+              variants={item}
+              className={`relative bg-white rounded-3xl p-8 border ${
+                tier.highlighted
+                  ? "border-brand-green shadow-xl md:scale-105 z-10"
+                  : "border-black/[0.05] shadow-sm"
+              } transition-transform duration-300 flex flex-col h-full`}
+            >
+              {tier.highlighted && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <span className="bg-brand-green text-black text-xs font-bold uppercase tracking-wider py-1 px-3 rounded-full">
+                    Most Popular
+                  </span>
                 </div>
-                <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-0">
-                    {tiers.map((tier, tierIdx) => (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: tierIdx * 0.1 }}
-                            key={tier.name}
-                            className={`rounded-3xl p-8 ring-1 xl:p-10 transition-colors ${tier.popular
-                                ? 'bg-[#1a1a1a] dark:bg-zinc-800 ring-[#1a1a1a] dark:ring-white/10 text-white shadow-xl scale-105 z-10'
-                                : 'bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-sm ring-black/10 dark:ring-white/10 text-[#1a1a1a] dark:text-white'
-                                }`}
-                        >
-                            <h3 id={tier.name} className={`text-lg font-semibold leading-8 ${tier.popular ? 'text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`}>
-                                {tier.name}
-                            </h3>
-                            {tier.popular && (
-                                <p className="rounded-full bg-brand-green/20 dark:bg-white/10 px-2.5 py-1 text-xs font-semibold leading-5 text-brand-green dark:text-white absolute top-8 right-8">
-                                    Most popular
-                                </p>
-                            )}
-                            <p className={`mt-4 text-sm leading-6 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>{tier.description}</p>
-                            <p className="mt-6 flex items-baseline gap-x-1">
-                                <span className={`text-4xl font-bold tracking-tight ${tier.popular ? 'text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`}>{tier.price}</span>
-                                {tier.period && <span className={`text-sm font-semibold leading-6 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>{tier.period}</span>}
-                            </p>
-                            <button
-                                aria-describedby={tier.name}
-                                className={`mt-6 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-full transition-colors ${tier.popular
-                                    ? 'bg-white text-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-gray-200'
-                                    : 'bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-gray-200'
-                                    }`}
-                            >
-                                {tier.buttonText}
-                            </button>
-                            <ul role="list" className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>
-                                {tier.features.map((feature) => (
-                                    <li key={feature} className="flex gap-x-3">
-                                        <Check className={`h-6 w-5 flex-none ${tier.popular ? 'text-brand-green dark:text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`} aria-hidden="true" />
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-                        </motion.div>
-                    ))}
+              )}
+              
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">{tier.name}</h3>
+                <p className="text-[#8e8e8e] text-sm h-10">{tier.description}</p>
+              </div>
+              
+              <div className="mb-8">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-display font-bold text-[#1a1a1a]">{tier.price}</span>
+                  {tier.period && <span className="text-[#8e8e8e] font-medium">{tier.period}</span>}
                 </div>
-            </div>
-        </section>
-    );
+              </div>
+              
+              <div className="flex-1">
+                <ul className="space-y-4 mb-8">
+                  {tier.features.map((feature, fIndex) => (
+                    <li key={fIndex} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-brand-green shrink-0 mt-0.5" />
+                      <span className="text-[#4b4b4b] text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <button
+                className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                  tier.highlighted
+                    ? "bg-[#1a1a1a] text-white hover:bg-black"
+                    : "bg-[#f1f1f1] text-[#1a1a1a] hover:bg-[#e1e1e1]"
+                }`}
+              >
+                {tier.cta}
+              </button>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
 }
