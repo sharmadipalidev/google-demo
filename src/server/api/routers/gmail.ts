@@ -111,6 +111,22 @@ export const gmailRouter = createTRPCRouter({
       return result;
     }),
 
+  // Modify message labels (Star, Trash, Spam, etc.)
+  modifyMessage: publicProcedure
+    .input(z.object({ 
+      id: z.string(), 
+      addLabelIds: z.array(z.string()).optional(), 
+      removeLabelIds: z.array(z.string()).optional() 
+    }))
+    .mutation(async ({ input }) => {
+      const result = await tenant.gmail.api.messages.modify({
+        id: input.id,
+        addLabelIds: input.addLabelIds,
+        removeLabelIds: input.removeLabelIds,
+      });
+      return result;
+    }),
+
   // Webhook health check
   webhookStatus: publicProcedure.query(async () => {
     return {

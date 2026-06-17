@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { api } from "@/trpc/react";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 // ─── Helpers ──────────────────────────────────────────────
 function extractHeader(
@@ -66,13 +66,18 @@ function getEmailBody(payload: any): { html: string; text: string } {
 }
 
 // ─── Tab Types ────────────────────────────────────────────
-type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar" | "assistant";
+type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar" | "assistant" | "starred" | "sent" | "spam" | "trash" | "overview" | "integrations" | "billing" | "settings" | "important" | "schedule" | "manage_subscription" | "ai_agent";
 
 // ─── Main Component ──────────────────────────────────────
 export default function GmailDashboard() {
+  const { user } = useUser();
+  const fullName = user?.fullName || user?.firstName || "User";
+
   const [activeTab, setActiveTab] = useState<Tab>("inbox");
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [isAgentic, setIsAgentic] = useState(false);
 
   // ── Compose form state
   const [composeTo, setComposeTo] = useState("");
@@ -80,9 +85,18 @@ export default function GmailDashboard() {
   const [composeBody, setComposeBody] = useState("");
 
   // ── Queries
+  const defaultQuery = useMemo(() => {
+    if (activeTab === "starred") return "is:starred";
+    if (activeTab === "sent") return "in:sent";
+    if (activeTab === "spam") return "in:spam";
+    if (activeTab === "trash") return "in:trash";
+    if (activeTab === "inbox") return "in:inbox";
+    return "";
+  }, [activeTab]);
+
   const messagesQuery = api.gmail.listMessages.useQuery(
-    { maxResults: 15, q: searchQuery || undefined },
-    { enabled: activeTab === "inbox", refetchInterval: 3000 },
+    { maxResults: 15, q: searchQuery || defaultQuery || undefined },
+    { enabled: ["inbox", "starred", "sent", "spam", "trash"].includes(activeTab), refetchInterval: 3000 },
   );
 
   const labelsQuery = api.gmail.listLabels.useQuery(undefined, {
@@ -226,19 +240,32 @@ export default function GmailDashboard() {
       setComposeTo("");
       setComposeSubject("");
       setComposeBody("");
-      alert("Email sent successfully!");
+      alert("Email sent!");
     },
     onError: (e) => alert(`Send failed: ${e.message}`),
   });
 
-  const tabs: { key: Tab; label: string; icon: string }[] = [
-    { key: "inbox", label: "Inbox", icon: "📥" },
-    { key: "labels", label: "Labels", icon: "🏷️" },
-    { key: "drafts", label: "Drafts", icon: "📝" },
-    { key: "compose", label: "Compose", icon: "✉️" },
-    { key: "calendar", label: "Calendar", icon: "📅" },
-    { key: "webhook", label: "Webhooks", icon: "🔔" },
-    { key: "assistant", label: "AI Assistant", icon: "✨" },
+  const modifyMutation = api.gmail.modifyMessage.useMutation({
+    onSuccess: () => {
+      messagesQuery.refetch();
+      selectedMessage.refetch();
+    },
+    onError: (e) => alert(`Action failed: ${e.message}`),
+  });
+
+  const primaryTabs: { key: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    { key: "inbox", label: "Inbox", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, badge: "28" },
+    { key: "starred", label: "Starred", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> },
+    { key: "sent", label: "Sent", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> },
+    { key: "drafts", label: "Drafts", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> },
+    { key: "spam", label: "Spam", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> },
+    { key: "trash", label: "Trash", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> },
+  ];
+
+  const secondaryTabs: { key: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    { key: "calendar", label: "Calendar", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> },
+    { key: "assistant", label: "AI Agent", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg> },
+    { key: "settings", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> },
   ];
 
   return (
@@ -259,41 +286,117 @@ export default function GmailDashboard() {
 
 
 
-        <nav className="sidebar-nav">
-          {tabs.map((tab) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+          <button
+            onClick={() => setActiveTab("compose")}
+            style={{
+              background: '#000000',
+              color: '#ffffff',
+              borderRadius: '12px',
+              padding: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              fontWeight: 600,
+              fontSize: '15px',
+              cursor: 'pointer',
+              border: 'none',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            Compose
+          </button>
+        </div>
+
+        <nav className="sidebar-nav" style={{ gap: '4px' }}>
+          {primaryTabs.map((tab) => (
             <button
               key={tab.key}
-              id={`tab-${tab.key}`}
               onClick={() => {
                 setActiveTab(tab.key);
                 setSelectedMessageId(null);
               }}
-              className={`nav-item ${activeTab === tab.key ? "active" : ""}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: activeTab === tab.key ? 'var(--bg-elevated)' : 'transparent',
+                color: activeTab === tab.key ? 'var(--text-primary)' : 'var(--text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '14px',
+                width: '100%',
+                textAlign: 'left'
+              }}
             >
-              <span className="nav-icon">{tab.icon}</span>
-              <span className="nav-label">{tab.label}</span>
+              <span style={{ display: 'flex', alignItems: 'center', opacity: activeTab === tab.key ? 1 : 0.7 }}>{tab.icon}</span>
+              <span style={{ flex: 1 }}>{tab.label}</span>
+              {tab.badge && (
+                <span style={{ background: '#e5e5e5', color: '#1a1a1a', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '100px' }}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          ))}
+
+          <div style={{ height: '1px', background: 'var(--border)', margin: '12px 0' }} />
+
+          {secondaryTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setActiveTab(tab.key);
+                setSelectedMessageId(null);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: activeTab === tab.key ? 'var(--bg-elevated)' : 'transparent',
+                color: activeTab === tab.key ? 'var(--text-primary)' : 'var(--text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '14px',
+                width: '100%',
+                textAlign: 'left'
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', opacity: activeTab === tab.key ? 1 : 0.7 }}>{tab.icon}</span>
+              <span style={{ flex: 1 }}>{tab.label}</span>
+              {tab.badge && (
+                <span style={{ background: '#e5e5e5', color: '#1a1a1a', fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="status-indicator">
-            <span className="status-dot" />
-            <span>Webhook Active</span>
-          </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "transparent", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.2s", width: '100%' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-            <UserButton showName appearance={{ elements: { userButtonBox: "flex-row-reverse w-full justify-between", userButtonOuterIdentifier: "font-medium text-sm text-primary dark:text-white" } }} />
+            <UserButton appearance={{ elements: { userButtonBox: "flex-row", userButtonOuterIdentifier: "hidden" } }} />
+            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {fullName}
+            </span>
           </div>
         </div>
       </aside>
 
       {/* ── Main Content ─────────────────────────── */}
       <main className="main-content">
-        {/* ── Inbox ────────────────────────────────── */}
-        {activeTab === "inbox" && (
-          <section className="panel" id="panel-inbox">
+        {/* ── Message Lists (Inbox, Starred, Sent, Spam, Trash) ── */}
+        {["inbox", "starred", "sent", "spam", "trash"].includes(activeTab) && (
+          <section className="panel" id={`panel-${activeTab}`}>
             <div className="panel-header">
-              <h2 className="panel-title">Inbox</h2>
+              <h2 className="panel-title">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
               <div className="search-bar">
                 <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
                   <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -361,9 +464,34 @@ export default function GmailDashboard() {
 
             {selectedMessageId && selectedMessage.data && (
               <div className="message-detail" id="message-detail-view">
-                <button className="btn-back" onClick={() => setSelectedMessageId(null)}>
-                  ← Back to Inbox
-                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <button className="btn-back" onClick={() => setSelectedMessageId(null)} style={{ margin: 0 }}>
+                    ← Back
+                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
+                      disabled={modifyMutation.isPending}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}
+                    >
+                      {selectedMessage.data?.labelIds?.includes('STARRED') ? '⭐ Unstar' : '☆ Star'}
+                    </button>
+                    <button 
+                      onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
+                      disabled={modifyMutation.isPending}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}
+                    >
+                      🚫 Spam
+                    </button>
+                    <button 
+                      onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
+                      disabled={modifyMutation.isPending}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#ef4444' }}
+                    >
+                      🗑️ Trash
+                    </button>
+                  </div>
+                </div>
                 <div className="detail-card">
                   <h3 className="detail-subject">
                     {extractHeader(selectedMessage.data.payload?.headers, "Subject") || "(No Subject)"}
@@ -745,6 +873,19 @@ export default function GmailDashboard() {
         {activeTab === "assistant" && (
           <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden' }}>
             <AssistantPanel />
+          </section>
+        )}
+
+        {/* ── Settings ────────────────────────────── */}
+        {activeTab === "settings" && (
+          <section className="panel" id="panel-settings">
+            <div className="panel-header">
+              <h2 className="panel-title">Settings</h2>
+            </div>
+            <div style={{ padding: '24px', background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', margin: '24px' }}>
+              <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Preferences</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Configure your account settings, notifications, and AI assistant behavior here.</p>
+            </div>
           </section>
         )}
       </main>
