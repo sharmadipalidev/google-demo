@@ -50,15 +50,15 @@ export default function Pricing() {
                             transition={{ duration: 0.5, delay: tierIdx * 0.1 }}
                             key={tier.name}
                             className={`rounded-3xl p-8 ring-1 xl:p-10 transition-colors ${tier.popular
-                                    ? 'bg-[#1a1a1a] dark:bg-zinc-800 ring-[#1a1a1a] dark:ring-white/10 text-white shadow-xl scale-105 z-10'
-                                    : 'bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-sm ring-black/10 dark:ring-white/10 text-[#1a1a1a] dark:text-white'
+                                ? 'bg-[#1a1a1a] dark:bg-zinc-800 ring-[#1a1a1a] dark:ring-white/10 text-white shadow-xl scale-105 z-10'
+                                : 'bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-sm ring-black/10 dark:ring-white/10 text-[#1a1a1a] dark:text-white'
                                 }`}
                         >
                             <h3 id={tier.name} className={`text-lg font-semibold leading-8 ${tier.popular ? 'text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`}>
                                 {tier.name}
                             </h3>
                             {tier.popular && (
-                                <p className="rounded-full bg-brand-green/20 px-2.5 py-1 text-xs font-semibold leading-5 text-brand-green absolute top-8 right-8">
+                                <p className="rounded-full bg-brand-green/20 dark:bg-white/10 px-2.5 py-1 text-xs font-semibold leading-5 text-brand-green dark:text-white absolute top-8 right-8">
                                     Most popular
                                 </p>
                             )}
@@ -70,8 +70,8 @@ export default function Pricing() {
                             <button
                                 aria-describedby={tier.name}
                                 className={`mt-6 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-full transition-colors ${tier.popular
-                                        ? 'bg-white dark:bg-brand-green text-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-[#8ade00]'
-                                        : 'bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-gray-200'
+                                    ? 'bg-white text-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-gray-200'
+                                    : 'bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-gray-200'
                                     }`}
                             >
                                 {tier.buttonText}
@@ -79,7 +79,7 @@ export default function Pricing() {
                             <ul role="list" className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.popular ? 'text-gray-300' : 'text-[#8e8e8e] dark:text-zinc-400'} transition-colors`}>
                                 {tier.features.map((feature) => (
                                     <li key={feature} className="flex gap-x-3">
-                                        <Check className={`h-6 w-5 flex-none ${tier.popular ? 'text-brand-green' : 'text-[#1a1a1a] dark:text-brand-green'} transition-colors`} aria-hidden="true" />
+                                        <Check className={`h-6 w-5 flex-none ${tier.popular ? 'text-brand-green dark:text-white' : 'text-[#1a1a1a] dark:text-white'} transition-colors`} aria-hidden="true" />
                                         {feature}
                                     </li>
                                 ))}

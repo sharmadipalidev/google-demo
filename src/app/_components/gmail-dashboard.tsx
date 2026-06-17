@@ -522,7 +522,7 @@ export default function GmailDashboard() {
             </div>
 
             {activeTab === "inbox" && !selectedMessageId && (
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 16px', gap: '24px', background: 'transparent' }}>
+              <div style={{ position: 'sticky', top: '-28px', zIndex: 10, display: 'flex', borderBottom: '1px solid var(--border)', padding: '16px 32px 0 32px', margin: '0 -32px', gap: '24px', background: 'var(--bg-deep)' }}>
                 {[
                   { id: "primary", label: "Primary", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, labelId: "CATEGORY_PERSONAL" },
                   { id: "promotions", label: "Promotions", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>, labelId: "CATEGORY_PROMOTIONS" },
@@ -538,8 +538,8 @@ export default function GmailDashboard() {
                       padding: '12px 8px',
                       background: 'none',
                       border: 'none',
-                      borderBottom: inboxCategory === cat.id ? '2px solid var(--accent)' : '2px solid transparent',
-                      color: inboxCategory === cat.id ? 'var(--accent)' : 'var(--text-secondary)',
+                      borderBottom: inboxCategory === cat.id ? '2px solid var(--text-primary)' : '2px solid transparent',
+                      color: inboxCategory === cat.id ? 'var(--text-primary)' : 'var(--text-secondary)',
                       fontWeight: inboxCategory === cat.id ? 600 : 500,
                       cursor: 'pointer',
                       display: 'flex',
@@ -553,8 +553,8 @@ export default function GmailDashboard() {
                     {cat.label}
                     <span style={{ 
                       marginLeft: '4px', 
-                      background: inboxCategory === cat.id ? 'var(--accent)' : '#e5e7eb', 
-                      color: inboxCategory === cat.id ? '#ffffff' : '#4b5563', 
+                      background: inboxCategory === cat.id ? 'var(--text-primary)' : 'var(--bg-elevated)', 
+                      color: inboxCategory === cat.id ? 'var(--bg-deep)' : 'var(--text-secondary)', 
                       fontSize: '11px', 
                       fontWeight: 700, 
                       padding: '2px 6px', 
