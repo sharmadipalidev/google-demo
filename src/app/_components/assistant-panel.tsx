@@ -85,7 +85,7 @@ export function AssistantPanel() {
       <div className="flex flex-col gap-2 p-8 border-b border-black/5 dark:border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 rounded-full bg-black/5 dark:bg-white/10 px-3 py-1 text-xs font-medium text-[#1a1a1a] dark:text-zinc-200">
-            <Bot size={14} className="text-brand-green" />
+            <img src="/download.svg" alt="Neurosync logo" className="w-4 h-4 object-contain dark:invert" />
             Neurosync AI
           </div>
         </div>
@@ -114,8 +114,8 @@ export function AssistantPanel() {
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-center max-w-2xl mx-auto">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green shadow-lg">
-              <Bot size={32} />
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1a1a1a] dark:bg-zinc-800 shadow-lg">
+              <img src="/download.svg" alt="Neurosync logo" className="w-8 h-8 object-contain invert dark:invert-0" />
             </div>
             
             <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-2 font-display">Delegate the busywork.</h2>
