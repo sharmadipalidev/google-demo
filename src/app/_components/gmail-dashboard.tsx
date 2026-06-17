@@ -245,8 +245,16 @@ export default function GmailDashboard() {
     <div className="gmail-dashboard">
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "var(--bg-elevated)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", marginBottom: "16px", cursor: "pointer", transition: "all 0.2s" }} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
-          <UserButton showName appearance={{ elements: { userButtonBox: "flex-row-reverse", userButtonOuterIdentifier: "font-semibold text-sm text-primary dark:text-white" } }} />
+        <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px', marginBottom: '16px' }}>
+          <div className="brand-icon" style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--bg-deep)', flexShrink: 0 }}>
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" />
+              <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="brand-title" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>NeuroSync</h1>
+          </div>
         </div>
 
 
@@ -268,10 +276,13 @@ export default function GmailDashboard() {
           ))}
         </nav>
 
-        <div className="sidebar-footer">
+        <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="status-indicator">
             <span className="status-dot" />
             <span>Webhook Active</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "transparent", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.2s", width: '100%' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+            <UserButton showName appearance={{ elements: { userButtonBox: "flex-row-reverse w-full justify-between", userButtonOuterIdentifier: "font-medium text-sm text-primary dark:text-white" } }} />
           </div>
         </div>
       </aside>
