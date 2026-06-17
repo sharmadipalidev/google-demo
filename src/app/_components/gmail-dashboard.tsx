@@ -26,6 +26,45 @@ function timeAgo(date: string | number | Date | null | undefined): string {
   return `${days}d ago`;
 }
 
+function decodeBase64URL(str: string) {
+  try {
+    return decodeURIComponent(
+      atob(str.replace(/-/g, "+").replace(/_/g, "/"))
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+  } catch (e) {
+    return "Error decoding email body";
+  }
+}
+
+function getEmailBody(payload: any): { html: string; text: string } {
+  let html = "";
+  let text = "";
+  if (!payload) return { html, text };
+
+  if (payload.body?.data) {
+    if (payload.mimeType === "text/html") html = decodeBase64URL(payload.body.data);
+    else text = decodeBase64URL(payload.body.data);
+  }
+
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      if (part.mimeType === "text/html" && part.body?.data) {
+        html = decodeBase64URL(part.body.data);
+      } else if (part.mimeType === "text/plain" && part.body?.data) {
+        text = decodeBase64URL(part.body.data);
+      } else if (part.parts) {
+        const sub = getEmailBody(part);
+        if (sub.html) html = sub.html;
+        if (sub.text) text = sub.text;
+      }
+    }
+  }
+  return { html, text };
+}
+
 // ─── Tab Types ────────────────────────────────────────────
 type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar" | "assistant";
 
@@ -336,7 +375,16 @@ export default function GmailDashboard() {
                     <span><strong>Date:</strong> {extractHeader(selectedMessage.data.payload?.headers, "Date")}</span>
                   </div>
                   <div className="detail-body">
-                    {selectedMessage.data.snippet ?? "No body content available"}
+                    {(() => {
+                      const bodyData = getEmailBody(selectedMessage.data.payload);
+                      if (bodyData.html) {
+                        return <iframe srcDoc={bodyData.html} style={{ width: '100%', minHeight: '500px', border: 'none', background: '#fff', borderRadius: '8px' }} sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin" />;
+                      } else if (bodyData.text) {
+                        return <div style={{ whiteSpace: "pre-wrap" }}>{bodyData.text}</div>;
+                      } else {
+                        return <div>No body content available</div>;
+                      }
+                    })()}
                   </div>
                   {selectedMessage.data.labelIds && (
                     <div className="detail-labels">

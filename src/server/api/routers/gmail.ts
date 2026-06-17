@@ -30,8 +30,7 @@ export const gmailRouter = createTRPCRouter({
           try {
             const fullMsg = await tenant.gmail.api.messages.get({ 
               id: msg.id, 
-              format: "metadata", 
-              metadataHeaders: ["Subject", "From", "Date"]
+              format: "full",
             });
             return {
               ...msg,

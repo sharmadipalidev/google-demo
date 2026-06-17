@@ -49,7 +49,8 @@
 /* ── Layout ────────────────────────────────── */
 .gmail-dashboard {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-deep);
   color: var(--text-primary);
   font-family: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
@@ -58,15 +59,14 @@
 /* ── Sidebar ───────────────────────────────── */
 .sidebar {
   width: 260px;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   background: var(--bg-surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 20px 14px;
   gap: 20px;
-  position: sticky;
-  top: 0;
   flex-shrink: 0;
 }
 
