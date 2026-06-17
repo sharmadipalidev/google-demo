@@ -1166,12 +1166,6 @@
   transition: all var(--transition-fast);
 }
 
-.calendar-event-chip:hover {
-  background: var(--accent);
-  color: var(--bg-deep);
-  transform: translateY(-1px);
-}
-
 .calendar-event-time {
   opacity: 0.8;
   flex-shrink: 0;
@@ -1397,19 +1391,11 @@
   line-height: 1.3;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  background: var(--accent);
-  color: var(--bg-deep);
   display: flex;
   flex-direction: column;
   cursor: pointer;
   z-index: 10;
   transition: transform 0.1s;
-}
-
-.time-grid-event:hover {
-  transform: scale(1.02);
-  z-index: 20;
-  filter: brightness(1.1);
 }
 
 .time-grid-event-title {

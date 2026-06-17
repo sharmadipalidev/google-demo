@@ -343,7 +343,7 @@ export default function GmailDashboard() {
     <div className="gmail-dashboard">
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
-        <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px', marginBottom: '16px' }}>
+        <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px' }}>
           <div className="brand-icon" style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--bg-deep)', flexShrink: 0 }}>
             <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" />
@@ -361,8 +361,8 @@ export default function GmailDashboard() {
           <button
             onClick={() => setActiveTab("compose")}
             style={{
-              background: '#000000',
-              color: '#ffffff',
+              background: 'var(--text-primary)',
+              color: 'var(--bg-deep)',
               borderRadius: '12px',
               padding: '12px',
               display: 'flex',
@@ -881,7 +881,7 @@ export default function GmailDashboard() {
                     <option value="week">Week</option>
                     <option value="day">Day</option>
                   </select>
-                  <button style={{ padding: '6px 16px', marginLeft: '12px', background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
+                  <button style={{ padding: '6px 16px', marginLeft: '12px', background: 'var(--accent)', color: 'var(--bg-deep)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'none'}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     Create
                   </button>
@@ -1047,7 +1047,7 @@ export default function GmailDashboard() {
                                   return (
                                     <div 
                                       key={evt.id} 
-                                      className="time-grid-event"
+                                      className={`time-grid-event color-${evt.colorId || '1'}`}
                                       style={{ top: `${startMin}px`, height: `${durationMin}px` }}
                                       title={evt.summary} 
                                       onClick={(e) => {
