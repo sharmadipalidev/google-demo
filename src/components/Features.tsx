@@ -63,7 +63,7 @@ export default function Features() {
             transition={{ duration: 0.6 }}
             className="text-[#4b4b4b] font-bold tracking-widest uppercase text-sm mb-3"
           >
-            Features
+            Platform Features
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 15 }}

@@ -29,9 +29,9 @@ function createAssistantAgent() {
         description:
             "Send a Gmail message when the user clearly asks to email someone.",
         parameters: z.object({
-            to: z.string().email(),
-            subject: z.string().min(1),
-            body: z.string().min(1),
+            to: z.string().describe("The email address to send to"),
+            subject: z.string().describe("The subject of the email"),
+            body: z.string().describe("The body of the email"),
         }),
         strict: true,
         execute: async ({ to, subject, body }) => {
@@ -46,15 +46,16 @@ function createAssistantAgent() {
         description:
             "Create a Google Calendar event when the user asks to add, schedule, or book time.",
         parameters: z.object({
-            summary: z.string().min(1),
+            summary: z.string().describe("The title of the event"),
             description: z.string().describe("Pass an empty string if no description is provided"),
-            start: z.string().min(1),
-            end: z.string().min(1),
+            start: z.string().describe("Start time in ISO format (e.g., 2026-06-18T23:00:00). Do NOT append 'Z' or timezone offset."),
+            end: z.string().describe("End time in ISO format (e.g., 2026-06-18T23:30:00). Do NOT append 'Z' or timezone offset."),
             colorId: z.string().describe("Pass an empty string if no color is provided"),
-            attendeeEmail: z.string().email().describe("The email address of the attendee to invite"),
+            attendeeEmail: z.string().describe("Optional email of the attendee to invite. Pass an empty string if no attendee."),
         }),
         strict: true,
         execute: async ({ summary, description, start, end, colorId, attendeeEmail }) => {
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             const result = await corsair.googlecalendar.api.events.create({
                 calendarId: "primary",
                 conferenceDataVersion: 1,
@@ -62,10 +63,10 @@ function createAssistantAgent() {
                 event: {
                     summary,
                     ...(description ? { description } : {}),
-                    start: { dateTime: start },
-                    end: { dateTime: end },
+                    start: { dateTime: start, timeZone },
+                    end: { dateTime: end, timeZone },
                     ...(colorId ? { colorId } : {}),
-                    attendees: [{ email: attendeeEmail }],
+                    ...(attendeeEmail ? { attendees: [{ email: attendeeEmail }] } : {}),
                     conferenceData: {
                         createRequest: {
                             requestId: Math.random().toString(36).substring(7),
@@ -75,7 +76,7 @@ function createAssistantAgent() {
                 } as any,
             });
 
-            return `Calendar event created and official invite sent to ${attendeeEmail}: ${result.summary ?? summary}${result.id ? ` (event ${result.id})` : ""}. Link: ${result.hangoutLink ?? "none"}`;
+            return `Calendar event created: ${result.summary ?? summary}${result.id ? ` (event ${result.id})` : ""}. Link: ${result.hangoutLink ?? "none"}`;
         },
     });
 
@@ -83,10 +84,11 @@ function createAssistantAgent() {
         name: "corsair-assistant",
         instructions: [
             "You are a concise operations assistant for Gmail and Google Calendar.",
+            `The current date and time is: ${new Date().toString()}. Your timezone is ${Intl.DateTimeFormat().resolvedOptions().timeZone}. Provide all dates in local time without UTC conversions.`,
             "Use send_email when the user wants to send an ordinary email.",
             "Use create_calendar_event when the user wants to add or schedule an event.",
-            "CRITICAL RULE: When the user asks to add or schedule an event, you MUST ONLY ask for the event time and their Gmail address (if not already provided). Do NOT ask for the date, duration, or any other calendar details.",
-            "Once you have the time and Gmail address, use create_calendar_event and pass their Gmail address as the attendeeEmail. This will automatically send them the official Google Calendar invite.",
+            "CRITICAL RULE: When the user asks to add or schedule an event, you MUST ONLY ask for the event time and date. Do NOT ask for their Gmail address.",
+            "Do not ask for duration or other details unless absolutely necessary. Assume an event is on their own calendar.",
             "If required details are missing for other tasks, ask for only the missing fields.",
             "After tool use, respond with a short confirmation and no extra chatter.",
         ].join(" "),
