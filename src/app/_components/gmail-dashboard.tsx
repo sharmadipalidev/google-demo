@@ -78,6 +78,7 @@ export default function GmailDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [isAgentic, setIsAgentic] = useState(false);
+  const [inboxCategory, setInboxCategory] = useState<"primary" | "promotions" | "social" | "updates">("primary");
 
   // ── Compose form state
   const [composeTo, setComposeTo] = useState("");
@@ -90,9 +91,11 @@ export default function GmailDashboard() {
     if (activeTab === "sent") return "in:sent";
     if (activeTab === "spam") return "in:spam";
     if (activeTab === "trash") return "in:trash";
-    if (activeTab === "inbox") return "in:inbox";
+    if (activeTab === "inbox") {
+      return `in:inbox category:${inboxCategory}`;
+    }
     return "";
-  }, [activeTab]);
+  }, [activeTab, inboxCategory]);
 
   const messagesQuery = api.gmail.listMessages.useQuery(
     { maxResults: 15, q: searchQuery || defaultQuery || undefined },
@@ -422,6 +425,39 @@ export default function GmailDashboard() {
                 </svg>
               </button>
             </div>
+
+            {activeTab === "inbox" && !selectedMessageId && (
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 16px', gap: '24px', background: 'var(--bg-elevated)' }}>
+                {[
+                  { id: "primary", label: "Primary", icon: "📬" },
+                  { id: "promotions", label: "Promotions", icon: "🏷️" },
+                  { id: "social", label: "Social", icon: "👥" },
+                  { id: "updates", label: "Updates", icon: "🔔" }
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setInboxCategory(cat.id as any)}
+                    style={{
+                      padding: '12px 8px',
+                      background: 'none',
+                      border: 'none',
+                      borderBottom: inboxCategory === cat.id ? '2px solid var(--accent)' : '2px solid transparent',
+                      color: inboxCategory === cat.id ? 'var(--accent)' : 'var(--text-secondary)',
+                      fontWeight: inboxCategory === cat.id ? 600 : 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span>{cat.icon}</span>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {messagesQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Fetching messages…</span></div>}
             {messagesQuery.error && <div className="error-state">⚠️ {messagesQuery.error.message}</div>}
