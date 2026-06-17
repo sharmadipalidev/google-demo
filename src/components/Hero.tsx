@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail } from "lucide-react";
+import { Mail, Bot } from "lucide-react";
 
 export default function Hero() {
   return (

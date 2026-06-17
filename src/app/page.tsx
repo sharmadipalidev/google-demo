@@ -4,7 +4,6 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import DashboardShowcase from "@/components/DashboardShowcase";
 import AgentDescription from "@/components/AgentDescription";
-import HowItWorks from "@/components/HowItWorks";
 import Features from "@/components/Features";
 import Pricing from "@/components/Pricing";
 import Footer from "@/components/Footer";
@@ -17,7 +16,6 @@ export default function Home() {
         <Hero />
         <DashboardShowcase />
         <AgentDescription />
-        <HowItWorks />
         <Features />
         <Pricing />
       </main>

@@ -49,7 +49,6 @@ export default function Navbar() {
         {/* Middle: Links */}
         <div className="hidden md:flex col-span-5 justify-center items-center gap-8">
           <Link href="#agent" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">AI Agent</Link>
-          <Link href="#how-it-works" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">How it works</Link>
           <Link href="#features" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">Features</Link>
           <Link href="#pricing" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">Pricing</Link>
         </div>
@@ -105,7 +104,6 @@ export default function Navbar() {
           >
             <div className="flex flex-col items-center gap-6 mb-8 mt-4">
               <Link href="#agent" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">AI Agent</Link>
-              <Link href="#how-it-works" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">How it works</Link>
               <Link href="#features" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Features</Link>
               <Link href="#pricing" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Pricing</Link>
             </div>

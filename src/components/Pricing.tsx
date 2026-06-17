@@ -110,7 +110,7 @@ export default function Pricing() {
               variants={item}
               className={`relative bg-white rounded-3xl p-8 border ${
                 tier.highlighted
-                  ? "border-brand-green shadow-xl md:scale-105 z-10"
+                  ? "border-2 border-brand-green shadow-2xl md:scale-105 z-10"
                   : "border-black/[0.05] shadow-sm"
               } transition-transform duration-300 flex flex-col h-full`}
             >
@@ -146,9 +146,11 @@ export default function Pricing() {
               </div>
               
               <button
-                className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
                   tier.highlighted
-                    ? "bg-[#1a1a1a] text-white hover:bg-black"
+                    ? "bg-brand-green text-black hover:bg-emerald-400 shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+                    : tier.name === "Enterprise"
+                    ? "bg-transparent border-2 border-[#1a1a1a] text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white"
                     : "bg-[#f1f1f1] text-[#1a1a1a] hover:bg-[#e1e1e1]"
                 }`}
               >

@@ -56,9 +56,18 @@ export default function HowItWorks() {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="bg-white rounded-3xl p-8 border border-black/[0.05] shadow-sm relative text-center"
             >
-              <div className="w-16 h-16 rounded-2xl bg-brand-green/10 flex items-center justify-center mx-auto mb-6">
-                <step.icon className="w-8 h-8 text-brand-green" />
-              </div>
+              <motion.div 
+                className="w-16 h-16 rounded-2xl bg-brand-green/10 flex items-center justify-center mx-auto mb-6 cursor-default"
+                whileHover={{ scale: 1.1, rotate: index === 1 ? 0 : (index % 2 === 0 ? 8 : -8) }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <motion.div
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: index * 0.4 }}
+                >
+                  <step.icon className="w-8 h-8 text-brand-green" />
+                </motion.div>
+              </motion.div>
               <h3 className="text-xl font-semibold text-[#1a1a1a] mb-3">{step.title}</h3>
               <p className="text-[#8e8e8e] leading-relaxed">{step.description}</p>
             </motion.div>
