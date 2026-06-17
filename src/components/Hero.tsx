@@ -13,22 +13,13 @@ export default function Hero() {
           loop
           muted
           playsInline
-          className="w-full h-full object-cover opacity-100 relative z-0"
+          className="w-full h-full object-cover opacity-80 relative z-0"
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260603_132049_036591b8-6e92-4760-b94c-a7ea6eef315c.mp4"
         />
       </div>
 
       <div className="max-w-7xl w-full mx-auto px-8 md:px-16 lg:px-20 relative z-10 grid grid-cols-12 gap-x-4 md:gap-x-8 pt-[15vh] sm:pt-[18vh]">
         <div className="col-span-12 md:col-span-10 md:col-start-2 flex flex-col items-center text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-black/10 text-sm text-[#1a1a1a] font-medium mb-6 shadow-sm backdrop-blur-sm"
-          >
-            <Sparkles className="w-4 h-4 text-[#8e8e8e]" />
-            <span>Introducing Corsair Workspace Assistant</span>
-          </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 15 }}
@@ -61,7 +52,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.15 }}
-            className="mt-8 text-lg md:text-xl text-white max-w-2xl font-sans bg-black/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-lg"
+            className="mt-8 text-lg md:text-xl text-white max-w-2xl font-sans bg-black/30 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-lg"
           >
             Manage your Gmail, schedule Google Meet events, and automate your workflow with a conversational AI agent.
           </motion.p>
