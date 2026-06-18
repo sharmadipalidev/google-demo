@@ -56,15 +56,7 @@ export async function GET(request: NextRequest) {
             redirectUri: REDIRECT_URI,
         });
 
-        const response = new NextResponse(
-            `<html><body>
-                <h2>Connected!</h2>
-                <p><strong>${escapeHtml(result.plugin)}</strong> authorized for tenant
-                <strong>${escapeHtml(result.tenantId)}</strong>.</p>
-                <p><a href="/gmail">Back to app</a></p>
-            </body></html>`,
-            { status: 200, headers: { 'Content-Type': 'text/html' } },
-        );
+        const response = NextResponse.redirect(new URL('/gmail', request.url));
         response.cookies.delete('oauth_state');
         return response;
     } catch (err) {
