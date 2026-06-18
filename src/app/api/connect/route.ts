@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing plugin param' }, { status: 400 });
     }
 
+    // Ensure the tenant is created so Corsair generates a DEK for them
+    await corsair.manage.tenants.create({ id: userId });
+
     const { url, state } = await generateOAuthUrl(corsair, plugin, {
         tenantId: userId,
         redirectUri: REDIRECT_URI,
