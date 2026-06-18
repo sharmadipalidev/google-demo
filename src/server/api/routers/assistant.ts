@@ -11,7 +11,7 @@ export const assistantRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const result = await runAssistantPrompt(input.prompt, ctx.googleAccessToken);
+      const result = await runAssistantPrompt(input.prompt, ctx.tenant);
       return result;
     }),
 });

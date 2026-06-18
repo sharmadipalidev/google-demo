@@ -1,7 +1,9 @@
 import { Agent, run, tool } from "@openai/agents";
 import { z } from "zod";
 
-import { gmailSendMessage, calendarCreateEvent } from "@/server/google-api";
+import { corsair } from "@/server/corsair";
+
+type CorsairTenant = ReturnType<typeof corsair.withTenant>;
 
 function buildRawEmail(input: {
     to: string;
@@ -23,7 +25,7 @@ function buildRawEmail(input: {
         .replace(/=+$/, "");
 }
 
-function createAssistantAgent(googleAccessToken: string) {
+function createAssistantAgent(tenant: CorsairTenant) {
     const sendEmail = tool({
         name: "send_email",
         description:
@@ -36,7 +38,7 @@ function createAssistantAgent(googleAccessToken: string) {
         strict: true,
         execute: async ({ to, subject, body }) => {
             const raw = buildRawEmail({ to, subject, body });
-            const result = await gmailSendMessage(googleAccessToken, { raw });
+            const result = await tenant.gmail.api.messages.send({ raw });
             return `Email sent to ${to}${result.id ? ` (message ${result.id})` : ""}.`;
         },
     });
@@ -56,7 +58,7 @@ function createAssistantAgent(googleAccessToken: string) {
         strict: true,
         execute: async ({ summary, description, start, end, colorId, attendeeEmail }) => {
             const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const result = await calendarCreateEvent(googleAccessToken, {
+            const result = await tenant.googlecalendar.api.events.create({
                 calendarId: "primary",
                 conferenceDataVersion: 1,
                 sendUpdates: "all",
@@ -67,12 +69,6 @@ function createAssistantAgent(googleAccessToken: string) {
                     end: { dateTime: end, timeZone },
                     ...(colorId ? { colorId } : {}),
                     ...(attendeeEmail ? { attendees: [{ email: attendeeEmail }] } : {}),
-                    conferenceData: {
-                        createRequest: {
-                            requestId: Math.random().toString(36).substring(7),
-                            conferenceSolutionKey: { type: "hangoutsMeet" }
-                        }
-                    }
                 },
             });
 
@@ -96,14 +92,14 @@ function createAssistantAgent(googleAccessToken: string) {
     });
 }
 
-export async function runAssistantPrompt(prompt: string, googleAccessToken: string) {
+export async function runAssistantPrompt(prompt: string, tenant: CorsairTenant) {
     if (!process.env.OPENAI_API_KEY) {
         throw new Error(
             "OPENAI_API_KEY is missing. Add it to .env.local before using the AI assistant.",
         );
     }
 
-    const agent = createAssistantAgent(googleAccessToken);
+    const agent = createAssistantAgent(tenant);
 
     const result = await run(agent, prompt);
 

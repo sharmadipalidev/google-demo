@@ -9,9 +9,14 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 import { db } from "@/server/db";
+import { corsair } from "@/server/corsair";
+import { setupCorsair } from "corsair";
+
+// Cache of provisioned tenant IDs to avoid calling setupCorsair on every request
+const provisionedTenants = new Set<string>();
 
 /**
  * 1. CONTEXT
@@ -110,10 +115,13 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
- * Middleware that enforces authentication and retrieves the user's Google OAuth
- * access token from Clerk. The token is added to context as `googleAccessToken`.
+ * Middleware that enforces Clerk auth and provides a tenant-scoped Corsair client.
+ *
+ * Each Clerk userId becomes a Corsair tenant — giving each user isolated
+ * Google credentials and API access. OAuth tokens are managed by Corsair
+ * internally after the user connects via /api/connect.
  */
-const googleAuthMiddleware = t.middleware(async ({ ctx, next }) => {
+const authMiddleware = t.middleware(async ({ ctx, next }) => {
   if (!ctx.userId) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
@@ -121,43 +129,33 @@ const googleAuthMiddleware = t.middleware(async ({ ctx, next }) => {
     });
   }
 
-  try {
-    const client = await clerkClient();
-    const response = await client.users.getUserOauthAccessToken(
-      ctx.userId,
-      "google",
-    );
-
-    const token = response.data?.[0]?.token;
-
-    if (!token) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message:
-          "No Google OAuth token found. Please sign out and sign back in with Google to grant Gmail/Calendar permissions.",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        userId: ctx.userId,
-        googleAccessToken: token,
-      },
-    });
-  } catch (error) {
-    if (error instanceof TRPCError) throw error;
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: `Failed to retrieve Google OAuth token: ${error instanceof Error ? error.message : "Unknown error"}`,
-    });
+  // Auto-provision this tenant in Corsair if not already done.
+  // setupCorsair is idempotent — creates integration + account rows if missing.
+  if (!provisionedTenants.has(ctx.userId)) {
+    await setupCorsair(corsair, { tenantId: ctx.userId });
+    provisionedTenants.add(ctx.userId);
   }
+
+  // Get a tenant-scoped Corsair client for this user
+  const tenant = corsair.withTenant(ctx.userId);
+
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.userId,
+      tenant,
+    },
+  });
 });
 
 /**
- * Protected procedure — requires Clerk auth + a valid Google OAuth token.
- * Use this for any procedure that needs to call Gmail or Calendar APIs on behalf of the user.
+ * Protected procedure — requires Clerk auth + Corsair tenant provisioning.
+ * Provides `ctx.tenant` (tenant-scoped Corsair client) for Gmail/Calendar API calls.
+ *
+ * If a user hasn't connected their Google account yet via /api/connect?plugin=gmail,
+ * Corsair will return an auth-missing error. The frontend should catch this and
+ * redirect the user to /api/connect?plugin=gmail to authorize.
  */
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
-  .use(googleAuthMiddleware);
+  .use(authMiddleware);

@@ -1,14 +1,5 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import {
-  gmailListMessages,
-  gmailGetMessage,
-  gmailListLabels,
-  gmailGetLabel,
-  gmailListDrafts,
-  gmailSendMessage,
-  gmailModifyMessage,
-} from "@/server/google-api";
 
 export const gmailRouter = createTRPCRouter({
   // List messages from Gmail
@@ -21,8 +12,7 @@ export const gmailRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const token = ctx.googleAccessToken;
-      const result = await gmailListMessages(token, {
+      const result = await ctx.tenant.gmail.api.messages.list({
         maxResults: input.maxResults,
         q: input.q,
         pageToken: input.pageToken,
@@ -35,8 +25,8 @@ export const gmailRouter = createTRPCRouter({
         result.messages.map(async (msg) => {
           if (!msg.id) return msg;
           try {
-            const fullMsg = await gmailGetMessage(token, { 
-              id: msg.id, 
+            const fullMsg = await ctx.tenant.gmail.api.messages.get({
+              id: msg.id,
               format: "full",
             });
             return {
@@ -62,29 +52,28 @@ export const gmailRouter = createTRPCRouter({
   getMessage: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const result = await gmailGetMessage(ctx.googleAccessToken, {
+      const result = await ctx.tenant.gmail.api.messages.get({
         id: input.id,
         format: "full",
       });
       return result;
     }),
 
-  // List all labels (does not include messagesUnread)
+  // List all labels
   listLabels: protectedProcedure.query(async ({ ctx }) => {
-    const result = await gmailListLabels(ctx.googleAccessToken);
+    const result = await ctx.tenant.gmail.api.labels.list({});
     return result;
   }),
 
   // Get unread counts for specific inbox categories
   getCategoryCounts: protectedProcedure.query(async ({ ctx }) => {
-    const token = ctx.googleAccessToken;
     const categoryIds = ["CATEGORY_PERSONAL", "CATEGORY_PROMOTIONS", "CATEGORY_SOCIAL", "CATEGORY_UPDATES"];
     const counts: Record<string, number> = {};
     
     await Promise.all(
       categoryIds.map(async (id) => {
         try {
-          const label = await gmailGetLabel(token, { id });
+          const label = await ctx.tenant.gmail.api.labels.get({ id });
           counts[id] = label.messagesUnread ?? 0;
         } catch (e) {
           counts[id] = 0;
@@ -103,7 +92,7 @@ export const gmailRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const result = await gmailListDrafts(ctx.googleAccessToken, {
+      const result = await ctx.tenant.gmail.api.drafts.list({
         maxResults: input.maxResults,
       });
       return result;
@@ -134,7 +123,7 @@ export const gmailRouter = createTRPCRouter({
         .replace(/\//g, "_")
         .replace(/=+$/, "");
 
-      const result = await gmailSendMessage(ctx.googleAccessToken, { raw });
+      const result = await ctx.tenant.gmail.api.messages.send({ raw });
       return result;
     }),
 
@@ -146,7 +135,7 @@ export const gmailRouter = createTRPCRouter({
       removeLabelIds: z.array(z.string()).optional() 
     }))
     .mutation(async ({ ctx, input }) => {
-      const result = await gmailModifyMessage(ctx.googleAccessToken, {
+      const result = await ctx.tenant.gmail.api.messages.modify({
         id: input.id,
         addLabelIds: input.addLabelIds,
         removeLabelIds: input.removeLabelIds,
