@@ -6,9 +6,10 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 import { db } from "@/server/db";
 
@@ -25,8 +26,11 @@ import { db } from "@/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const { userId } = await auth();
+
   return {
     db,
+    userId,
     ...opts,
   };
 };
@@ -104,3 +108,56 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Middleware that enforces authentication and retrieves the user's Google OAuth
+ * access token from Clerk. The token is added to context as `googleAccessToken`.
+ */
+const googleAuthMiddleware = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "You must be signed in to access this resource.",
+    });
+  }
+
+  try {
+    const client = await clerkClient();
+    const response = await client.users.getUserOauthAccessToken(
+      ctx.userId,
+      "google",
+    );
+
+    const token = response.data?.[0]?.token;
+
+    if (!token) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "No Google OAuth token found. Please sign out and sign back in with Google to grant Gmail/Calendar permissions.",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        userId: ctx.userId,
+        googleAccessToken: token,
+      },
+    });
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: `Failed to retrieve Google OAuth token: ${error instanceof Error ? error.message : "Unknown error"}`,
+    });
+  }
+});
+
+/**
+ * Protected procedure — requires Clerk auth + a valid Google OAuth token.
+ * Use this for any procedure that needs to call Gmail or Calendar APIs on behalf of the user.
+ */
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(googleAuthMiddleware);

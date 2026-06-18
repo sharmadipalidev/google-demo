@@ -1,7 +1,7 @@
 import { Agent, run, tool } from "@openai/agents";
 import { z } from "zod";
 
-import { corsair } from "@/server/corsair";
+import { gmailSendMessage, calendarCreateEvent } from "@/server/google-api";
 
 function buildRawEmail(input: {
     to: string;
@@ -23,7 +23,7 @@ function buildRawEmail(input: {
         .replace(/=+$/, "");
 }
 
-function createAssistantAgent() {
+function createAssistantAgent(googleAccessToken: string) {
     const sendEmail = tool({
         name: "send_email",
         description:
@@ -36,7 +36,7 @@ function createAssistantAgent() {
         strict: true,
         execute: async ({ to, subject, body }) => {
             const raw = buildRawEmail({ to, subject, body });
-            const result = await corsair.gmail.api.messages.send({ raw });
+            const result = await gmailSendMessage(googleAccessToken, { raw });
             return `Email sent to ${to}${result.id ? ` (message ${result.id})` : ""}.`;
         },
     });
@@ -56,7 +56,7 @@ function createAssistantAgent() {
         strict: true,
         execute: async ({ summary, description, start, end, colorId, attendeeEmail }) => {
             const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const result = await corsair.googlecalendar.api.events.create({
+            const result = await calendarCreateEvent(googleAccessToken, {
                 calendarId: "primary",
                 conferenceDataVersion: 1,
                 sendUpdates: "all",
@@ -73,7 +73,7 @@ function createAssistantAgent() {
                             conferenceSolutionKey: { type: "hangoutsMeet" }
                         }
                     }
-                } as any,
+                },
             });
 
             return `Calendar event created: ${result.summary ?? summary}${result.id ? ` (event ${result.id})` : ""}. Link: ${result.hangoutLink ?? "none"}`;
@@ -96,17 +96,14 @@ function createAssistantAgent() {
     });
 }
 
-export async function runAssistantPrompt(prompt: string) {
+export async function runAssistantPrompt(prompt: string, googleAccessToken: string) {
     if (!process.env.OPENAI_API_KEY) {
         throw new Error(
             "OPENAI_API_KEY is missing. Add it to .env.local before using the AI assistant.",
         );
     }
 
-    const agent = createAssistantAgent();
-
-    // Set the topic_id to authenticate the user's Gmail and Calendar properly
-    await corsair.keys.gmail.set_topic_id("test-user");
+    const agent = createAssistantAgent(googleAccessToken);
 
     const result = await run(agent, prompt);
 

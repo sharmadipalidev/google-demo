@@ -1,12 +1,18 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { corsair } from "@/server/corsair";
-
-const tenant = corsair;
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  gmailListMessages,
+  gmailGetMessage,
+  gmailListLabels,
+  gmailGetLabel,
+  gmailListDrafts,
+  gmailSendMessage,
+  gmailModifyMessage,
+} from "@/server/google-api";
 
 export const gmailRouter = createTRPCRouter({
   // List messages from Gmail
-  listMessages: publicProcedure
+  listMessages: protectedProcedure
     .input(
       z.object({
         maxResults: z.number().min(1).max(50).optional().default(10),
@@ -14,8 +20,9 @@ export const gmailRouter = createTRPCRouter({
         pageToken: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
-      const result = await tenant.gmail.api.messages.list({
+    .query(async ({ ctx, input }) => {
+      const token = ctx.googleAccessToken;
+      const result = await gmailListMessages(token, {
         maxResults: input.maxResults,
         q: input.q,
         pageToken: input.pageToken,
@@ -28,7 +35,7 @@ export const gmailRouter = createTRPCRouter({
         result.messages.map(async (msg) => {
           if (!msg.id) return msg;
           try {
-            const fullMsg = await tenant.gmail.api.messages.get({ 
+            const fullMsg = await gmailGetMessage(token, { 
               id: msg.id, 
               format: "full",
             });
@@ -52,10 +59,10 @@ export const gmailRouter = createTRPCRouter({
     }),
 
   // Get a single message by ID
-  getMessage: publicProcedure
+  getMessage: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const result = await tenant.gmail.api.messages.get({
+    .query(async ({ ctx, input }) => {
+      const result = await gmailGetMessage(ctx.googleAccessToken, {
         id: input.id,
         format: "full",
       });
@@ -63,20 +70,21 @@ export const gmailRouter = createTRPCRouter({
     }),
 
   // List all labels (does not include messagesUnread)
-  listLabels: publicProcedure.query(async () => {
-    const result = await tenant.gmail.api.labels.list({});
+  listLabels: protectedProcedure.query(async ({ ctx }) => {
+    const result = await gmailListLabels(ctx.googleAccessToken);
     return result;
   }),
 
   // Get unread counts for specific inbox categories
-  getCategoryCounts: publicProcedure.query(async () => {
+  getCategoryCounts: protectedProcedure.query(async ({ ctx }) => {
+    const token = ctx.googleAccessToken;
     const categoryIds = ["CATEGORY_PERSONAL", "CATEGORY_PROMOTIONS", "CATEGORY_SOCIAL", "CATEGORY_UPDATES"];
     const counts: Record<string, number> = {};
     
     await Promise.all(
       categoryIds.map(async (id) => {
         try {
-          const label = await tenant.gmail.api.labels.get({ id });
+          const label = await gmailGetLabel(token, { id });
           counts[id] = label.messagesUnread ?? 0;
         } catch (e) {
           counts[id] = 0;
@@ -88,21 +96,21 @@ export const gmailRouter = createTRPCRouter({
   }),
 
   // List drafts
-  listDrafts: publicProcedure
+  listDrafts: protectedProcedure
     .input(
       z.object({
         maxResults: z.number().min(1).max(50).optional().default(10),
       })
     )
-    .query(async ({ input }) => {
-      const result = await tenant.gmail.api.drafts.list({
+    .query(async ({ ctx, input }) => {
+      const result = await gmailListDrafts(ctx.googleAccessToken, {
         maxResults: input.maxResults,
       });
       return result;
     }),
 
   // Send an email
-  sendEmail: publicProcedure
+  sendEmail: protectedProcedure
     .input(
       z.object({
         to: z.string().email(),
@@ -110,7 +118,7 @@ export const gmailRouter = createTRPCRouter({
         body: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // Build RFC 2822 email and base64url encode
       const email = [
         `To: ${input.to}`,
@@ -126,19 +134,19 @@ export const gmailRouter = createTRPCRouter({
         .replace(/\//g, "_")
         .replace(/=+$/, "");
 
-      const result = await tenant.gmail.api.messages.send({ raw });
+      const result = await gmailSendMessage(ctx.googleAccessToken, { raw });
       return result;
     }),
 
   // Modify message labels (Star, Trash, Spam, etc.)
-  modifyMessage: publicProcedure
+  modifyMessage: protectedProcedure
     .input(z.object({ 
       id: z.string(), 
       addLabelIds: z.array(z.string()).optional(), 
       removeLabelIds: z.array(z.string()).optional() 
     }))
-    .mutation(async ({ input }) => {
-      const result = await tenant.gmail.api.messages.modify({
+    .mutation(async ({ ctx, input }) => {
+      const result = await gmailModifyMessage(ctx.googleAccessToken, {
         id: input.id,
         addLabelIds: input.addLabelIds,
         removeLabelIds: input.removeLabelIds,
@@ -147,11 +155,11 @@ export const gmailRouter = createTRPCRouter({
     }),
 
   // Webhook health check
-  webhookStatus: publicProcedure.query(async () => {
+  webhookStatus: protectedProcedure.query(async ({ ctx }) => {
     return {
       status: "active",
       endpoint: "/api/webhooks",
-      tenantId: "dev",
+      userId: ctx.userId,
       plugins: ["gmail", "googlecalendar"],
       timestamp: new Date().toISOString(),
     };

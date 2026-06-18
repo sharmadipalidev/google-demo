@@ -1,12 +1,15 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { corsair } from "@/server/corsair";
-
-const tenant = corsair;
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  calendarListEvents,
+  calendarCreateEvent,
+  calendarUpdateEvent,
+  calendarDeleteEvent,
+} from "@/server/google-api";
 
 export const calendarRouter = createTRPCRouter({
   // List events from Google Calendar
-  listEvents: publicProcedure
+  listEvents: protectedProcedure
     .input(
       z.object({
         maxResults: z.number().min(1).max(2500).optional().default(100),
@@ -16,9 +19,9 @@ export const calendarRouter = createTRPCRouter({
         timeMax: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
-        const result = await tenant.googlecalendar.api.events.getMany({
+        const result = await calendarListEvents(ctx.googleAccessToken, {
           calendarId: 'primary',
           maxResults: input.maxResults,
           q: input.q,
@@ -36,7 +39,7 @@ export const calendarRouter = createTRPCRouter({
     }),
 
   // Create a new event in Google Calendar
-  createEvent: publicProcedure
+  createEvent: protectedProcedure
     .input(
       z.object({
         summary: z.string(),
@@ -46,9 +49,9 @@ export const calendarRouter = createTRPCRouter({
         colorId: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        const result = await tenant.googlecalendar.api.events.create({
+        const result = await calendarCreateEvent(ctx.googleAccessToken, {
           calendarId: 'primary',
           event: {
             summary: input.summary,
@@ -65,7 +68,7 @@ export const calendarRouter = createTRPCRouter({
     }),
 
   // Update an existing event in Google Calendar
-  updateEvent: publicProcedure
+  updateEvent: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -76,9 +79,9 @@ export const calendarRouter = createTRPCRouter({
         colorId: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        const result = await tenant.googlecalendar.api.events.update({
+        const result = await calendarUpdateEvent(ctx.googleAccessToken, {
           calendarId: 'primary',
           id: input.id,
           event: {
@@ -96,15 +99,15 @@ export const calendarRouter = createTRPCRouter({
     }),
 
   // Delete an event in Google Calendar
-  deleteEvent: publicProcedure
+  deleteEvent: protectedProcedure
     .input(
       z.object({
         id: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        await tenant.googlecalendar.api.events.delete({
+        await calendarDeleteEvent(ctx.googleAccessToken, {
           calendarId: 'primary',
           id: input.id,
         });
