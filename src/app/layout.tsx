@@ -8,8 +8,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeAwareClerkProvider } from "@/components/ThemeAwareClerkProvider";
 
 export const metadata: Metadata = {
-  title: "Corsair AI Workspace",
-  description: "Prompt Gmail and Google Calendar actions with Corsair",
+  title: "Neurosync",
+  description: "Prompt Gmail and Google Calendar actions with Neurosync",
 };
 
 const inter = Inter({
