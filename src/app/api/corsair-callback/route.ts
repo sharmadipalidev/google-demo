@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { corsair } from '@/server/corsair';
 
-const REDIRECT_URI = `${process.env.APP_URL ?? 'http://localhost:3000'}/api/corsair-callback`;
+const APP_URL = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+const REDIRECT_URI = `${APP_URL}/api/corsair-callback`;
 
 function escapeHtml(value: string): string {
     return value
