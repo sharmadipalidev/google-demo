@@ -97,10 +97,10 @@ export default function Features() {
               key={index}
               variants={item}
               whileHover={{ y: -5 }}
-              className="bg-white p-8 rounded-2xl border border-black/[0.05] shadow-sm hover:shadow-lg transition-all duration-300"
+              className="bg-white/50 backdrop-blur-xl p-8 rounded-2xl border border-white/60 shadow-sm hover:shadow-xl transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-brand-green/10 flex items-center justify-center mb-6">
-                <feature.icon className="w-6 h-6 text-brand-green" />
+              <div className="w-12 h-12 rounded-xl bg-black/[0.04] flex items-center justify-center mb-6 border border-black/[0.05]">
+                <feature.icon className="w-6 h-6 text-[#1a1a1a]" />
               </div>
               <h3 className="text-xl font-semibold text-[#1a1a1a] mb-3">{feature.title}</h3>
               <p className="text-[#8e8e8e] leading-relaxed">{feature.description}</p>

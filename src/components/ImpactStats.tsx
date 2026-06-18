@@ -54,9 +54,11 @@ export default function ImpactStats() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="bg-brand-green/5 rounded-2xl border border-black/[0.04] overflow-hidden"
+          className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/30 shadow-lg overflow-hidden relative"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-black/[0.04]">
+          {/* Optional subtle glow inside the glass card */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+          <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-black/[0.05]">
             {stats.map((stat, index) => (
               <div key={index} className="px-6 py-10 md:py-12 text-center flex flex-col items-center justify-center">
                 <div className="text-4xl md:text-5xl font-display font-medium text-[#1a1a1a] tracking-tight mb-3">

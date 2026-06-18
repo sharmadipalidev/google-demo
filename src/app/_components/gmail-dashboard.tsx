@@ -5,7 +5,7 @@ import { api } from "@/trpc/react";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
-
+import { Star, ShieldAlert, Trash2 } from "lucide-react";
 // ─── Helpers ──────────────────────────────────────────────
 function extractHeader(
   headers: Array<{ name?: string; value?: string }> | undefined,
@@ -624,23 +624,32 @@ export default function GmailDashboard() {
                     <button 
                       onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
                       disabled={modifyMutation.isPending}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
                     >
-                      {selectedMessage.data?.labelIds?.includes('STARRED') ? '⭐ Unstar' : '☆ Star'}
+                      <Star className="w-4 h-4" fill={selectedMessage.data?.labelIds?.includes('STARRED') ? "currentColor" : "none"} />
+                      {selectedMessage.data?.labelIds?.includes('STARRED') ? 'Unstar' : 'Star'}
                     </button>
                     <button 
                       onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
                       disabled={modifyMutation.isPending}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
                     >
-                      🚫 Spam
+                      <ShieldAlert className="w-4 h-4" />
+                      Spam
                     </button>
                     <button 
                       onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
                       disabled={modifyMutation.isPending}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#ef4444' }}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#ef4444', transition: 'background 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
                     >
-                      🗑️ Trash
+                      <Trash2 className="w-4 h-4" />
+                      Trash
                     </button>
                   </div>
                 </div>
