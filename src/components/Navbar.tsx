@@ -107,7 +107,7 @@ export default function Navbar() {
               <Link href="#features" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Features</Link>
               <Link href="#pricing" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Pricing</Link>
             </div>
-            
+
             <div className="flex flex-col gap-4 w-64">
               {isSignedIn ? (
                 <Link

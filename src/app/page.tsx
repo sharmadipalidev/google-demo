@@ -6,6 +6,7 @@ import DashboardShowcase from "@/components/DashboardShowcase";
 import AgentDescription from "@/components/AgentDescription";
 import Features from "@/components/Features";
 import Pricing from "@/components/Pricing";
+import ImpactStats from "@/components/ImpactStats";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
         <AgentDescription />
         <Features />
         <Pricing />
+        <ImpactStats />
       </main>
       <Footer />
     </div>
