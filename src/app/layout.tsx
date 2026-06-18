@@ -6,7 +6,6 @@ import { Inter, Outfit } from "next/font/google";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeAwareClerkProvider } from "@/components/ThemeAwareClerkProvider";
-import { Agentation } from "agentation";
 
 export const metadata: Metadata = {
   title: "Corsair AI Workspace",
@@ -38,7 +37,6 @@ export default function RootLayout({
           <ThemeAwareClerkProvider>
             <TRPCReactProvider>{children}</TRPCReactProvider>
           </ThemeAwareClerkProvider>
-          <Agentation />
         </ThemeProvider>
       </body>
     </html>

@@ -11,7 +11,7 @@ export default function DashboardShowcase() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 w-full max-w-6xl mx-auto rounded-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-black/10 overflow-hidden bg-white/50 backdrop-blur-xl"
+        className="relative z-10 w-full max-w-6xl mx-auto rounded-xl shadow-2xl border border-black/10 overflow-hidden bg-white/50 backdrop-blur-xl"
       >
         <Image
           src="/Screenshot 2026-06-18 174015.png"
