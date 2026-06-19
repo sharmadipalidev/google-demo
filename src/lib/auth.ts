@@ -5,7 +5,6 @@ import { env } from "@/env";
 import * as schema from "@/server/db/schema";
 import { setupCorsair } from "corsair";
 import { corsair } from "@/server/corsair";
-import { dash } from "@better-auth/infra";
 
 async function syncGoogleTokens(account: any) {
   if (account.providerId !== "google") return;
@@ -41,7 +40,7 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_SECRET ||
     "fallback_secret_for_dev_mode_which_is_now_32_chars_long!!",
   baseURL: env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  trustedOrigins: ["http://localhost:3001"],
+  trustedOrigins: ["http://localhost:3000", "http://localhost:3001"],
   trustHost: true,
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -121,5 +120,5 @@ export const auth = betterAuth({
       ],
     },
   },
-  plugins: [dash()],
+  plugins: [],
 });
