@@ -2,7 +2,7 @@
 
 Neurosync is an AI-powered workspace that acts as your personal AI operator. It deeply integrates into your workflow to manage your Gmail, schedule Google Meet events, and automate busywork using a conversational AI agent. Built on the modern T3 Stack, it securely connects to Google APIs via Corsair.
 
-##URL Of Website:- https://theneurosync.in
+URL Of Website:- https://theneurosync.in
 ---
 
 ##  Key Features
