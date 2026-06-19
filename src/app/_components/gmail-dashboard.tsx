@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { api } from "@/trpc/react";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser, SignOutButton } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { Star, ShieldAlert, Trash2 } from "lucide-react";
 // ─── Helpers ──────────────────────────────────────────────
@@ -22,7 +22,7 @@ function formatExactDate(date: string | number | Date | null | undefined): strin
   } else {
     d = new Date(date);
   }
-  
+
   if (isNaN(d.getTime())) return "";
 
   return d.toLocaleString(undefined, {
@@ -74,7 +74,7 @@ function getEmailBody(payload: any): { html: string; text: string } {
 }
 
 const avatarColors = [
-  "#ef4444", "#f97316", "#f59e0b", "#10b981", 
+  "#ef4444", "#f97316", "#f59e0b", "#10b981",
   "#06b6d4", "#3b82f6", "#6366f1", "#a855f7", "#ec4899"
 ];
 
@@ -184,14 +184,14 @@ export default function GmailDashboard() {
   const timeMin = useMemo(() => {
     if (daysToRender.length === 0) return new Date().toISOString();
     const d = new Date(daysToRender[0]);
-    d.setHours(0,0,0,0);
+    d.setHours(0, 0, 0, 0);
     return d.toISOString();
   }, [daysToRender]);
 
   const timeMax = useMemo(() => {
     if (daysToRender.length === 0) return new Date().toISOString();
     const d = new Date(daysToRender[daysToRender.length - 1]);
-    d.setHours(23,59,59,999);
+    d.setHours(23, 59, 59, 999);
     return d.toISOString();
   }, [daysToRender]);
 
@@ -450,13 +450,21 @@ export default function GmailDashboard() {
           ))}
         </nav>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "transparent", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.2s", width: '100%' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
             <UserButton appearance={{ elements: { userButtonBox: "flex-row", userButtonOuterIdentifier: "hidden" } }} />
             <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fullName}
             </span>
           </div>
+          <SignOutButton>
+            <button style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+              <span style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              </span>
+              Logout
+            </button>
+          </SignOutButton>
         </div>
       </aside>
 
@@ -467,107 +475,108 @@ export default function GmailDashboard() {
           <section className="panel" id={`panel-${activeTab}`}>
             <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-deep)', padding: '28px 32px 0 32px', margin: '-28px -32px 0 -32px' }}>
               <div className="panel-header" style={{ marginBottom: activeTab === "inbox" && !selectedMessageId ? '0' : '24px' }}>
-              <h2 className="panel-title">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
-              <div className="search-bar">
-                <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                  <path d="M16 16l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <input
-                  id="search-input"
-                  type="text"
-                  placeholder="Search emails…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") messagesQuery.refetch();
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
-                <button
-                  disabled={currentPageIndex === 0}
-                  onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
-                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: currentPageIndex === 0 ? 0.5 : 1, color: 'var(--text-primary)' }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <button
-                  disabled={!messagesQuery.data?.nextPageToken}
-                  onClick={() => {
-                    if (messagesQuery.data?.nextPageToken) {
-                      const nextToken = messagesQuery.data.nextPageToken;
-                      setPageTokens(prev => {
-                        const newTokens = [...prev];
-                        newTokens[currentPageIndex + 1] = nextToken;
-                        return newTokens;
-                      });
-                      setCurrentPageIndex(p => p + 1);
-                    }
-                  }}
-                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: !messagesQuery.data?.nextPageToken ? 0.5 : 1, color: 'var(--text-primary)' }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-              </div>
-              <button
-                className="btn-refresh"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                title="Toggle Theme"
-              >
-                {mounted && theme === 'dark' ? (
-                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                )}
-              </button>
-            </div>
-
-            {activeTab === "inbox" && !selectedMessageId && (
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', paddingTop: '16px', gap: '24px' }}>
-                {[
-                  { id: "primary", label: "Primary", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, labelId: "CATEGORY_PERSONAL" },
-                  { id: "promotions", label: "Promotions", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>, labelId: "CATEGORY_PROMOTIONS" },
-                  { id: "social", label: "Social", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>, labelId: "CATEGORY_SOCIAL" },
-                  { id: "updates", label: "Updates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>, labelId: "CATEGORY_UPDATES" }
-                ].map((cat) => {
-                  const count = categoryCountsQuery.data?.[cat.labelId] || 0;
-                  return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setInboxCategory(cat.id as any)}
-                    style={{
-                      padding: '12px 8px',
-                      background: 'none',
-                      border: 'none',
-                      borderBottom: inboxCategory === cat.id ? '2px solid var(--text-primary)' : '2px solid transparent',
-                      color: inboxCategory === cat.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      fontWeight: inboxCategory === cat.id ? 600 : 500,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '14px',
-                      transition: 'all 0.2s'
+                <h2 className="panel-title">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
+                <div className="search-bar">
+                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                    <path d="M16 16l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  <input
+                    id="search-input"
+                    type="text"
+                    placeholder="Search emails…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") messagesQuery.refetch();
                     }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
+                  <button
+                    disabled={currentPageIndex === 0}
+                    onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
+                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: currentPageIndex === 0 ? 0.5 : 1, color: 'var(--text-primary)' }}
                   >
-                    <span>{cat.icon}</span>
-                    {cat.label}
-                    <span style={{ 
-                      marginLeft: '4px', 
-                      background: inboxCategory === cat.id ? 'var(--text-primary)' : 'var(--bg-elevated)', 
-                      color: inboxCategory === cat.id ? 'var(--bg-deep)' : 'var(--text-secondary)', 
-                      fontSize: '11px', 
-                      fontWeight: 700, 
-                      padding: '2px 6px', 
-                      borderRadius: '12px', 
-                    }}>
-                      {count} new
-                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
                   </button>
-                )})}
+                  <button
+                    disabled={!messagesQuery.data?.nextPageToken}
+                    onClick={() => {
+                      if (messagesQuery.data?.nextPageToken) {
+                        const nextToken = messagesQuery.data.nextPageToken;
+                        setPageTokens(prev => {
+                          const newTokens = [...prev];
+                          newTokens[currentPageIndex + 1] = nextToken;
+                          return newTokens;
+                        });
+                        setCurrentPageIndex(p => p + 1);
+                      }
+                    }}
+                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: !messagesQuery.data?.nextPageToken ? 0.5 : 1, color: 'var(--text-primary)' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                  </button>
+                </div>
+                <button
+                  className="btn-refresh"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  title="Toggle Theme"
+                >
+                  {mounted && theme === 'dark' ? (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+                  )}
+                </button>
               </div>
-            )}
+
+              {activeTab === "inbox" && !selectedMessageId && (
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', paddingTop: '16px', gap: '24px' }}>
+                  {[
+                    { id: "primary", label: "Primary", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, labelId: "CATEGORY_PERSONAL" },
+                    { id: "promotions", label: "Promotions", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>, labelId: "CATEGORY_PROMOTIONS" },
+                    { id: "social", label: "Social", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>, labelId: "CATEGORY_SOCIAL" },
+                    { id: "updates", label: "Updates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>, labelId: "CATEGORY_UPDATES" }
+                  ].map((cat) => {
+                    const count = categoryCountsQuery.data?.[cat.labelId] || 0;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setInboxCategory(cat.id as any)}
+                        style={{
+                          padding: '12px 8px',
+                          background: 'none',
+                          border: 'none',
+                          borderBottom: inboxCategory === cat.id ? '2px solid var(--text-primary)' : '2px solid transparent',
+                          color: inboxCategory === cat.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          fontWeight: inboxCategory === cat.id ? 600 : 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '14px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <span>{cat.icon}</span>
+                        {cat.label}
+                        <span style={{
+                          marginLeft: '4px',
+                          background: inboxCategory === cat.id ? 'var(--text-primary)' : 'var(--bg-elevated)',
+                          color: inboxCategory === cat.id ? 'var(--bg-deep)' : 'var(--text-secondary)',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '12px',
+                        }}>
+                          {count} new
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {messagesQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Fetching messages…</span></div>}
@@ -579,38 +588,39 @@ export default function GmailDashboard() {
                   const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
                   const initial = senderName.charAt(0).toUpperCase();
                   const avatarColor = getAvatarColor(senderName);
-                  
+
                   return (
-                  <li
-                    key={msg.id}
-                    className="message-row"
-                    onClick={() => setSelectedMessageId(msg.id!)}
-                    id={`msg-${msg.id}`}
-                  >
-                    <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
-                      {initial}
-                    </div>
-                    <div className="msg-body">
-                      <div className="msg-top-line">
-                        <span className="msg-sender">
-                          {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
-                        </span>
-                        <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
+                    <li
+                      key={msg.id}
+                      className="message-row"
+                      onClick={() => setSelectedMessageId(msg.id!)}
+                      id={`msg-${msg.id}`}
+                    >
+                      <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
+                        {initial}
                       </div>
-                      <div className="msg-subject">
-                        {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
-                      </div>
-                      <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
-                      {msg.labelIds && (
-                        <div className="msg-labels">
-                          {msg.labelIds.slice(0, 3).map((lbl) => (
-                            <span key={lbl} className="label-chip">{lbl}</span>
-                          ))}
+                      <div className="msg-body">
+                        <div className="msg-top-line">
+                          <span className="msg-sender">
+                            {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
+                          </span>
+                          <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
                         </div>
-                      )}
-                    </div>
-                  </li>
-                )})}
+                        <div className="msg-subject">
+                          {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
+                        </div>
+                        <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
+                        {msg.labelIds && (
+                          <div className="msg-labels">
+                            {msg.labelIds.slice(0, 3).map((lbl) => (
+                              <span key={lbl} className="label-chip">{lbl}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
               </ul>
             )}
 
@@ -621,7 +631,7 @@ export default function GmailDashboard() {
                     ← Back
                   </button>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
+                    <button
                       onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
                       disabled={modifyMutation.isPending}
                       style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
@@ -631,7 +641,7 @@ export default function GmailDashboard() {
                       <Star className="w-4 h-4" fill={selectedMessage.data?.labelIds?.includes('STARRED') ? "currentColor" : "none"} />
                       {selectedMessage.data?.labelIds?.includes('STARRED') ? 'Unstar' : 'Star'}
                     </button>
-                    <button 
+                    <button
                       onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
                       disabled={modifyMutation.isPending}
                       style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
@@ -641,7 +651,7 @@ export default function GmailDashboard() {
                       <ShieldAlert className="w-4 h-4" />
                       Spam
                     </button>
-                    <button 
+                    <button
                       onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
                       disabled={modifyMutation.isPending}
                       style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#ef4444', transition: 'background 0.2s' }}
@@ -883,19 +893,19 @@ export default function GmailDashboard() {
                   </button>
                   <button className="btn-today" onClick={handleToday}>Today</button>
                   <div style={{ position: 'relative', marginLeft: '12px' }}>
-                    <button 
+                    <button
                       onClick={() => setCalendarDropdownOpen(!calendarDropdownOpen)}
                       style={{ padding: '6px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', minWidth: '100px', justifyContent: 'space-between', boxShadow: 'var(--shadow-sm)' }}
                     >
                       {calendarView.charAt(0).toUpperCase() + calendarView.slice(1)}
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}><path d="M6 9l6 6 6-6"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}><path d="M6 9l6 6 6-6" /></svg>
                     </button>
                     {calendarDropdownOpen && (
                       <>
                         <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setCalendarDropdownOpen(false)}></div>
                         <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', padding: '4px', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 50, minWidth: '100%' }}>
                           {['month', 'week', 'day'].map(view => (
-                            <button 
+                            <button
                               key={view}
                               onClick={() => { setCalendarView(view as any); setCalendarDropdownOpen(false); }}
                               style={{ padding: '6px 12px', background: calendarView === view ? 'var(--bg-card)' : 'transparent', border: 'none', borderRadius: '4px', textAlign: 'left', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '13px', fontWeight: 500, transition: 'background 0.2s' }}
@@ -910,7 +920,7 @@ export default function GmailDashboard() {
                     )}
                   </div>
                   <button style={{ padding: '6px 16px', marginLeft: '12px', background: '#ffffff', color: '#1a1a1a', border: '1px solid var(--border)', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' }} onClick={() => openAddEvent()} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
                     Create
                   </button>
                 </div>
@@ -937,9 +947,9 @@ export default function GmailDashboard() {
                 title="Toggle Theme"
               >
                 {mounted && theme === 'dark' ? (
-                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>
                 ) : (
-                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
                 )}
               </button>
             </div>
@@ -973,7 +983,7 @@ export default function GmailDashboard() {
                         const dateStr = dateObj.toISOString().split('T')[0];
                         const dayNum = dateObj.getDate();
                         const isToday = new Date().toISOString().split('T')[0] === dateStr;
-                        
+
                         const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
                           const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
                           return evtStartStr === dateStr;
@@ -1046,7 +1056,7 @@ export default function GmailDashboard() {
                                 {Array.from({ length: 24 }).map((_, i) => (
                                   <div key={`grid-line-${i}`} className="time-grid-line"></div>
                                 ))}
-                                
+
                                 {isToday && (
                                   <div className="current-time-line" style={{ top: `${(new Date().getHours() * 60 + new Date().getMinutes())}px` }}>
                                     <div className="current-time-dot"></div>
@@ -1056,28 +1066,28 @@ export default function GmailDashboard() {
                                 {dayEvents.map((evt: any) => {
                                   const isAllDay = !evt.start?.dateTime;
                                   if (isAllDay) return null;
-                                  
+
                                   const startDate = new Date(evt.start.dateTime);
                                   const endDate = new Date(evt.end?.dateTime || evt.start.dateTime);
-                                  
+
                                   const startMin = startDate.getHours() * 60 + startDate.getMinutes();
                                   const durationMin = Math.max((endDate.getTime() - startDate.getTime()) / 60000, 30);
-                                  
+
                                   const formatTime = (d: Date) => {
                                     let hours = d.getHours();
                                     const mins = d.getMinutes();
                                     const ampm = hours >= 12 ? 'pm' : 'am';
                                     hours = hours % 12;
                                     hours = hours ? hours : 12;
-                                    return `${hours}:${mins < 10 ? '0'+mins : mins}${ampm}`;
+                                    return `${hours}:${mins < 10 ? '0' + mins : mins}${ampm}`;
                                   };
 
                                   return (
-                                    <div 
-                                      key={evt.id} 
+                                    <div
+                                      key={evt.id}
                                       className={`time-grid-event color-${evt.colorId || '1'}`}
                                       style={{ top: `${startMin}px`, height: `${durationMin}px` }}
-                                      title={evt.summary} 
+                                      title={evt.summary}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         openEditEvent(evt, e);
@@ -1176,12 +1186,12 @@ export default function GmailDashboard() {
               <h2 className="panel-title">Settings</h2>
             </div>
             <div style={{ padding: '0 24px 24px', margin: '0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              
+
               {/* Profile Section */}
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
                 <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Profile</h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Manage your public profile and personal details.</p>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Display Name</label>
@@ -1198,7 +1208,7 @@ export default function GmailDashboard() {
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
                 <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Connected Accounts</h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Connect your Google accounts to enable Gmail and Calendar integrations via Neurosync.</p>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {/* Gmail */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border)' }}>
@@ -1221,7 +1231,7 @@ export default function GmailDashboard() {
                         transition: 'all 0.2s',
                       }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                       Connect Gmail
                     </a>
                   </div>
@@ -1247,12 +1257,12 @@ export default function GmailDashboard() {
                         transition: 'all 0.2s',
                       }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                       Connect Calendar
                     </a>
                   </div>
                 </div>
-                
+
                 <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '16px', lineHeight: '1.5' }}>
                   🔒 Powered by <strong>Neurosync</strong> — your credentials are encrypted and stored securely. Tokens are auto-refreshed.
                 </p>
@@ -1260,28 +1270,28 @@ export default function GmailDashboard() {
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
                 <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Preferences</h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Customize your app experience.</p>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>Dark Mode</div>
                       <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Toggle the appearance of the app</div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                      style={{ 
-                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px', 
-                        background: theme === 'dark' ? 'var(--text-primary)' : '#e5e5e5', border: 'none', cursor: 'pointer', transition: 'all 0.2s' 
+                      style={{
+                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px',
+                        background: theme === 'dark' ? 'var(--text-primary)' : '#e5e5e5', border: 'none', cursor: 'pointer', transition: 'all 0.2s'
                       }}
                     >
-                      <div style={{ 
-                        position: 'absolute', top: '2px', left: theme === 'dark' ? '22px' : '2px', 
-                        width: '20px', height: '20px', borderRadius: '50%', background: 'var(--bg-deep)', 
-                        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+                      <div style={{
+                        position: 'absolute', top: '2px', left: theme === 'dark' ? '22px' : '2px',
+                        width: '20px', height: '20px', borderRadius: '50%', background: 'var(--bg-deep)',
+                        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                       }} />
                     </button>
                   </div>
-                  
+
                   <div style={{ height: '1px', background: 'var(--border)' }}></div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1289,16 +1299,16 @@ export default function GmailDashboard() {
                       <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>Email Notifications</div>
                       <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Receive daily summaries of your inbox</div>
                     </div>
-                    <button 
-                      style={{ 
-                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px', 
-                        background: 'var(--text-primary)', border: 'none', cursor: 'pointer', transition: 'all 0.2s' 
+                    <button
+                      style={{
+                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px',
+                        background: 'var(--text-primary)', border: 'none', cursor: 'pointer', transition: 'all 0.2s'
                       }}
                     >
-                      <div style={{ 
-                        position: 'absolute', top: '2px', left: '22px', 
-                        width: '20px', height: '20px', borderRadius: '50%', background: 'var(--bg-deep)', 
-                        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+                      <div style={{
+                        position: 'absolute', top: '2px', left: '22px',
+                        width: '20px', height: '20px', borderRadius: '50%', background: 'var(--bg-deep)',
+                        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                       }} />
                     </button>
                   </div>
@@ -1309,7 +1319,7 @@ export default function GmailDashboard() {
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
                 <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>AI Assistant</h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Configure how your AI agent behaves.</p>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Default Action</label>
@@ -1341,27 +1351,27 @@ export default function GmailDashboard() {
             <form className="compose-form" style={{ maxWidth: '100%', padding: '20px 0 0', border: 'none', background: 'transparent' }} onSubmit={handleEventSubmit}>
               <div className="form-group">
                 <label>Event Title</label>
-                <input type="text" value={editingEventData.summary} onChange={e => setEditingEventData({...editingEventData, summary: e.target.value})} required autoFocus placeholder="Add title" />
+                <input type="text" value={editingEventData.summary} onChange={e => setEditingEventData({ ...editingEventData, summary: e.target.value })} required autoFocus placeholder="Add title" />
               </div>
               <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>Start Time</label>
-                  <input type="datetime-local" value={editingEventData.start} onChange={e => setEditingEventData({...editingEventData, start: e.target.value})} required />
+                  <input type="datetime-local" value={editingEventData.start} onChange={e => setEditingEventData({ ...editingEventData, start: e.target.value })} required />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>End Time</label>
-                  <input type="datetime-local" value={editingEventData.end} onChange={e => setEditingEventData({...editingEventData, end: e.target.value})} required />
+                  <input type="datetime-local" value={editingEventData.end} onChange={e => setEditingEventData({ ...editingEventData, end: e.target.value })} required />
                 </div>
               </div>
               <div className="form-group">
                 <label>Description</label>
-                <textarea rows={3} value={editingEventData.description} onChange={e => setEditingEventData({...editingEventData, description: e.target.value})} placeholder="Add description" />
+                <textarea rows={3} value={editingEventData.description} onChange={e => setEditingEventData({ ...editingEventData, description: e.target.value })} placeholder="Add description" />
               </div>
               <div className="form-group">
                 <label>Color</label>
                 <div className="color-picker">
                   {["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"].map(c => (
-                    <button key={c} type="button" className={`color-swatch color-${c} ${editingEventData.colorId === c ? 'selected' : ''}`} onClick={() => setEditingEventData({...editingEventData, colorId: c})} />
+                    <button key={c} type="button" className={`color-swatch color-${c} ${editingEventData.colorId === c ? 'selected' : ''}`} onClick={() => setEditingEventData({ ...editingEventData, colorId: c })} />
                   ))}
                 </div>
               </div>

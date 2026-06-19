@@ -1,0 +1,145 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Neurosync API",
+    "description": "API for Neurosync - Prompt Gmail and Google Calendar actions",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/trpc/gmail.listMessages": {
+      "get": {
+        "summary": "List Gmail Messages",
+        "description": "Retrieve a list of messages from the authenticated user's Gmail inbox.",
+        "tags": ["Gmail"],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON encoded input containing query, maxResults, and pageToken."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of messages."
+          }
+        }
+      }
+    },
+    "/trpc/gmail.sendEmail": {
+      "post": {
+        "summary": "Send an Email",
+        "description": "Send a new email using the authenticated user's Gmail account.",
+        "tags": ["Gmail"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": { "type": "string" },
+                  "subject": { "type": "string" },
+                  "body": { "type": "string" }
+                },
+                "required": ["to", "subject", "body"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email sent successfully."
+          }
+        }
+      }
+    },
+    "/trpc/calendar.listEvents": {
+      "get": {
+        "summary": "List Calendar Events",
+        "description": "Retrieve a list of events from the authenticated user's Google Calendar.",
+        "tags": ["Calendar"],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON encoded input containing timeMin and timeMax."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of events."
+          }
+        }
+      }
+    },
+    "/trpc/calendar.createEvent": {
+      "post": {
+        "summary": "Create Calendar Event",
+        "description": "Create a new event in the user's Google Calendar.",
+        "tags": ["Calendar"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "summary": { "type": "string" },
+                  "description": { "type": "string" },
+                  "start": { "type": "string", "format": "date-time" },
+                  "end": { "type": "string", "format": "date-time" }
+                },
+                "required": ["summary", "start", "end"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event created successfully."
+          }
+        }
+      }
+    },
+    "/trpc/assistant.chat": {
+      "post": {
+        "summary": "Chat with AI Agent",
+        "description": "Send a message to the Neurosync AI assistant.",
+        "tags": ["Assistant"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string" }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI response."
+          }
+        }
+      }
+    }
+  }
+}

@@ -51,6 +51,7 @@ export default function Navbar() {
           <Link href="#agent" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">AI Agent</Link>
           <Link href="#features" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">Features</Link>
           <Link href="#pricing" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">Pricing</Link>
+          <Link href="/docs" className="text-sm font-medium text-[#4b4b4b] hover:text-[#1a1a1a] transition-colors">Docs</Link>
         </div>
 
         {/* Right: Actions */}
@@ -106,6 +107,7 @@ export default function Navbar() {
               <Link href="#agent" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">AI Agent</Link>
               <Link href="#features" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Features</Link>
               <Link href="#pricing" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Pricing</Link>
+              <Link href="/docs" onClick={() => setIsOpen(false)} className="text-xl font-medium text-[#1a1a1a]">Docs</Link>
             </div>
 
             <div className="flex flex-col gap-4 w-64">
