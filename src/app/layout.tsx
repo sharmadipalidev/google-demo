@@ -5,7 +5,7 @@ import { Inter, Outfit } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeAwareClerkProvider } from "@/components/ThemeAwareClerkProvider";
+
 
 export const metadata: Metadata = {
   title: "Neurosync",
@@ -34,9 +34,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ThemeAwareClerkProvider>
-            <TRPCReactProvider>{children}</TRPCReactProvider>
-          </ThemeAwareClerkProvider>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
         </ThemeProvider>
       </body>
     </html>

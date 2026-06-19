@@ -2,13 +2,14 @@ import { generateOAuthUrl } from 'corsair/oauth';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { corsair } from '@/server/corsair';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@/lib/auth";
 
 const APP_URL = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const REDIRECT_URI = `${APP_URL}/api/corsair-callback`;
 
 export async function GET(request: NextRequest) {
-    const { userId } = await auth();
+    const session = await auth.api.getSession({ headers: request.headers });
+    const userId = session?.user?.id;
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

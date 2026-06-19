@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useAuth, SignInButton } from "@clerk/nextjs";
+import { useSession, signIn } from "@/lib/auth-client";
 import { ChevronRight } from "lucide-react";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { isSignedIn } = useAuth();
+  const { data: session } = useSession();
+  const isSignedIn = !!session;
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 py-6 md:py-10 bg-gradient-to-b from-[#f1f1f1]/80 to-transparent backdrop-blur-[2px]">
@@ -64,11 +65,9 @@ export default function Navbar() {
               Dashboard <ChevronRight className="w-4 h-4" />
             </Link>
           ) : (
-            <SignInButton mode="modal">
-              <button className="bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/60 transition-all duration-300 flex items-center gap-1">
-                Sign in <ChevronRight className="w-4 h-4" />
-              </button>
-            </SignInButton>
+            <button onClick={() => signIn.social({ provider: 'google', callbackURL: '/gmail' })} className="bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/60 transition-all duration-300 flex items-center gap-1">
+              Sign in <ChevronRight className="w-4 h-4" />
+            </button>
           )}
         </div>
 
@@ -120,11 +119,9 @@ export default function Navbar() {
                   Dashboard <ChevronRight className="w-5 h-5" />
                 </Link>
               ) : (
-                <SignInButton mode="modal">
-                  <button onClick={() => setIsOpen(false)} className="bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-5 py-3 rounded-full text-lg font-semibold hover:bg-white/60 transition-all duration-300 flex items-center justify-center gap-2 w-full">
-                    Sign in <ChevronRight className="w-5 h-5" />
-                  </button>
-                </SignInButton>
+                <button onClick={() => { setIsOpen(false); signIn.social({ provider: 'google', callbackURL: '/gmail' }); }} className="bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-5 py-3 rounded-full text-lg font-semibold hover:bg-white/60 transition-all duration-300 flex items-center justify-center gap-2 w-full">
+                  Sign in <ChevronRight className="w-5 h-5" />
+                </button>
               )}
             </div>
           </motion.div>

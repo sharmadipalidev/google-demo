@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { api } from "@/trpc/react";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
-import { UserButton, useUser, SignOutButton } from "@clerk/nextjs";
+import { useSession, signOut } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
 import { Star, ShieldAlert, Trash2 } from "lucide-react";
 // ─── Helpers ──────────────────────────────────────────────
@@ -92,8 +92,10 @@ type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar" | 
 
 // ─── Main Component ──────────────────────────────────────
 export default function GmailDashboard() {
-  const { user } = useUser();
-  const fullName = user?.fullName || user?.firstName || "User";
+  const { data: session } = useSession();
+  const user = session?.user;
+  const fullName = user?.name || "User";
+  const avatarInitials = fullName.charAt(0).toUpperCase();
 
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -452,19 +454,19 @@ export default function GmailDashboard() {
 
         <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "transparent", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.2s", width: '100%' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-            <UserButton appearance={{ elements: { userButtonBox: "flex-row", userButtonOuterIdentifier: "hidden" } }} />
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--text-primary)', color: 'var(--bg-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px' }}>
+              {user?.image ? <img src={user.image} alt={fullName} style={{ width: '100%', height: '100%', borderRadius: '50%' }} /> : avatarInitials}
+            </div>
             <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fullName}
             </span>
           </div>
-          <SignOutButton>
-            <button style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-              <span style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-              </span>
-              Logout
-            </button>
-          </SignOutButton>
+          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.href = '/' }})} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+            <span style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </span>
+            Logout
+          </button>
         </div>
       </aside>
 

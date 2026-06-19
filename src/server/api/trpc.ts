@@ -9,7 +9,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 
 import { db } from "@/server/db";
 import { corsair } from "@/server/corsair";
@@ -31,7 +31,18 @@ const provisionedTenants = new Set<string>();
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const { userId } = await auth();
+  const session = await auth.api.getSession({ headers: opts.headers });
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    const cookie = opts.headers.get("cookie");
+    console.log("[TRPC Context] No session found. Cookie header present:", !!cookie);
+    if (cookie) {
+      console.log("[TRPC Context] Cookie keys:", cookie.split(";").map(c => c.trim().split("=")[0]));
+    }
+  } else {
+    console.log("[TRPC Context] Session found for user:", userId);
+  }
 
   return {
     db,
@@ -115,9 +126,9 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
- * Middleware that enforces Clerk auth and provides a tenant-scoped Corsair client.
+ * Middleware that enforces better-auth and provides a tenant-scoped Corsair client.
  *
- * Each Clerk userId becomes a Corsair tenant — giving each user isolated
+ * Each user ID becomes a Corsair tenant — giving each user isolated
  * Google credentials and API access. OAuth tokens are managed by Corsair
  * internally after the user connects via /api/connect.
  */
@@ -149,7 +160,7 @@ const authMiddleware = t.middleware(async ({ ctx, next }) => {
 });
 
 /**
- * Protected procedure — requires Clerk auth + Corsair tenant provisioning.
+ * Protected procedure — requires better-auth + Corsair tenant provisioning.
  * Provides `ctx.tenant` (tenant-scoped Corsair client) for Gmail/Calendar API calls.
  *
  * If a user hasn't connected their Google account yet via /api/connect?plugin=gmail,

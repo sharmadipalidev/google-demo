@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Mail, Calendar, ArrowRight } from "lucide-react";
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export default async function OnboardingPage() {
-  const { userId } = await auth();
+  const session = await auth.api.getSession({ headers: await headers() });
+  const userId = session?.user?.id;
   if (!userId) {
     redirect("/sign-in");
   }
