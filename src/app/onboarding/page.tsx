@@ -8,7 +8,7 @@ export default async function OnboardingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/");
   }
 
   return (

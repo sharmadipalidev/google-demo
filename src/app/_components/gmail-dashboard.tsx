@@ -185,14 +185,14 @@ export default function GmailDashboard() {
 
   const timeMin = useMemo(() => {
     if (daysToRender.length === 0) return new Date().toISOString();
-    const d = new Date(daysToRender[0]);
+    const d = new Date(daysToRender[0]!);
     d.setHours(0, 0, 0, 0);
     return d.toISOString();
   }, [daysToRender]);
 
   const timeMax = useMemo(() => {
     if (daysToRender.length === 0) return new Date().toISOString();
-    const d = new Date(daysToRender[daysToRender.length - 1]);
+    const d = new Date(daysToRender[daysToRender.length - 1]!);
     d.setHours(23, 59, 59, 999);
     return d.toISOString();
   }, [daysToRender]);
@@ -461,7 +461,7 @@ export default function GmailDashboard() {
               {fullName}
             </span>
           </div>
-          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.href = '/' }})} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } }})} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
             <span style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </span>
@@ -883,7 +883,7 @@ export default function GmailDashboard() {
               <div className="calendar-toolbar-left">
                 <h2 className="calendar-month-title">
                   {calendarView === "month" && `${currentMonthName} ${calYear}`}
-                  {calendarView === "week" && `${monthNames[daysToRender[0].getMonth()]} ${daysToRender[0].getFullYear()}`}
+                  {calendarView === "week" && daysToRender[0] && `${monthNames[daysToRender[0].getMonth()]} ${daysToRender[0].getFullYear()}`}
                   {calendarView === "day" && `${monthNames[currentMonthDate.getMonth()]} ${currentMonthDate.getDate()}, ${currentMonthDate.getFullYear()}`}
                 </h2>
                 <div className="calendar-nav-buttons">

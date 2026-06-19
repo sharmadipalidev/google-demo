@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node *)",
+      "Bash(SKIP_ENV_VALIDATION=1 pnpm exec tsc --noEmit)"
+    ]
+  }
+}
