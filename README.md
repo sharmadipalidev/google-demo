@@ -2,9 +2,10 @@
 
 Neurosync is an AI-powered workspace that acts as your personal AI operator. It deeply integrates into your workflow to manage your Gmail, schedule Google Meet events, and automate busywork using a conversational AI agent. Built on the modern T3 Stack, it securely connects to Google APIs via Corsair.
 
+URL Of Website:- https://theneurosync.in
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 1. **AI-Powered Inbox Management**: Chat with an AI agent that can summarize email threads, draft replies, and organize your inbox.
 2. **Automated Scheduling**: Ask the agent to schedule Google Calendar events directly from your chat.
@@ -14,7 +15,7 @@ Neurosync is an AI-powered workspace that acts as your personal AI operator. It 
 
 ---
 
-## 🏗️ Application Architecture & Flow
+## Application Architecture & Flow
 
 1. **Authentication**: Users sign up or log in using **Clerk**.
 2. **Onboarding**: New users are automatically redirected to `/onboarding` where they connect their Gmail or Google Calendar.
@@ -24,7 +25,7 @@ Neurosync is an AI-powered workspace that acts as your personal AI operator. It 
 
 ---
 
-## 📁 File Structure
+##  File Structure
 
 ```text
 google-demo/
@@ -54,7 +55,7 @@ google-demo/
 
 ---
 
-## 🗄️ Database Diagram
+##  Database Diagram
 
 Neurosync uses a PostgreSQL database managed by Drizzle ORM. The core tables handle Corsair's OAuth integration accounts, synchronized entities (emails, calendars), and webhook events.
 
@@ -107,7 +108,7 @@ erDiagram
 
 ---
 
-## ⚙️ Tech Stack
+##  Tech Stack
 
 - **Framework**: Next.js 15+ (App Router)
 - **Styling**: Tailwind CSS & Framer Motion
@@ -119,7 +120,7 @@ erDiagram
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Environment Variables
 
