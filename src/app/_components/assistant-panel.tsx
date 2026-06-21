@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import { Mic, Send, Bot, Sparkles, X, Edit2 } from "lucide-react";
+import { Mic, Send, Bot, Sparkles, X, Edit2, ArrowRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -227,34 +227,34 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
             }
           }}
         >
-          <div className={`relative flex items-center rounded-2xl border bg-white dark:bg-zinc-900 px-2 py-2 shadow-sm transition-all ${isListening ? 'border-black/20 ring-1 ring-black/20 dark:border-white dark:ring-white' : 'border-black/5 dark:border-white/5 focus-within:border-black/20 dark:focus-within:border-white focus-within:ring-1 focus-within:ring-black/20 dark:focus-within:ring-white'}`}>
+          <div className={`relative flex items-center rounded-full border bg-white dark:bg-zinc-900 px-3 py-2 shadow-sm transition-all ${isListening ? 'border-black/20 ring-1 ring-black/20 dark:border-white dark:ring-white' : 'border-black/5 dark:border-white/5 focus-within:border-black/20 dark:focus-within:border-white focus-within:ring-1 focus-within:ring-black/20 dark:focus-within:ring-white'}`}>
             <input
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value.slice(0, 500))}
-              placeholder={isListening ? "Listening..." : "Tell the agent what outcome you want..."}
+              placeholder={isListening ? "Listening..." : "Type a command or ask a question..."}
               className="w-full bg-transparent px-4 py-3 text-sm text-[#1a1a1a] dark:text-white placeholder:text-[#8e8e8e] dark:placeholder:text-zinc-600 focus:outline-none transition-colors"
               disabled={runPrompt.isPending}
               autoFocus
             />
             
-            <div className="flex items-center gap-1 pr-2">
+            <div className="flex items-center gap-2 pr-1">
               <button
                 type="button"
                 onClick={toggleListening}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${isListening ? 'bg-black/10 dark:bg-white/20 text-[#1a1a1a] dark:text-white animate-pulse' : 'text-[#8e8e8e] dark:text-zinc-500 hover:text-[#1a1a1a] dark:hover:text-white'}`}
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${isListening ? 'bg-black/10 dark:bg-white/20 text-[#1a1a1a] dark:text-white animate-pulse' : 'text-[#8e8e8e] dark:text-zinc-500 hover:text-[#1a1a1a] dark:hover:text-white'}`}
               >
                 <Mic className="w-4 h-4" />
               </button>
               <button
                 type="submit"
                 disabled={!canSubmit || runPrompt.isPending}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:bg-gray-200 dark:disabled:bg-zinc-800 disabled:text-gray-400"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:bg-gray-200 dark:disabled:bg-zinc-800 disabled:text-gray-400 shadow-sm"
               >
                 {runPrompt.isPending ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 dark:border-black/20 border-t-white dark:border-t-black" />
                 ) : (
-                  <Send className="w-4 h-4 ml-0.5" />
+                  <ArrowRight className="w-5 h-5" />
                 )}
               </button>
             </div>

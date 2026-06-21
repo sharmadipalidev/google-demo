@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, Bot } from "lucide-react";
+import { Mail, Bot, ArrowRight } from "lucide-react";
+import { signIn } from "@/lib/auth-client";
 
 export default function Hero() {
   return (
@@ -38,15 +39,21 @@ export default function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="mt-8 bg-black/5 backdrop-blur-xl rounded-full border border-black/10 p-1.5 pl-6 flex items-center shadow-sm w-full max-w-[420px] transition-all duration-300"
+            className="mt-8 relative flex items-center rounded-full border bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md px-2.5 py-1.5 shadow-sm border-black/5 dark:border-white/5 w-full max-w-[380px] transition-all duration-300"
           >
             <input
-              placeholder="Email address"
-              className="flex-1 bg-transparent border-none outline-none text-[#1a1a1a] placeholder:text-[#4b4b4b] text-sm py-2 leading-none"
+              placeholder="Type a command or ask a question..."
+              className="w-full bg-transparent px-4 py-2 text-sm text-[#1a1a1a] dark:text-white placeholder:text-[#8e8e8e] dark:placeholder:text-zinc-600 focus:outline-none transition-colors"
             />
-            <button className="bg-white text-[#1a1a1a] font-semibold text-sm px-6 py-2.5 rounded-full shadow-sm hover:bg-gray-50 transition-colors whitespace-nowrap ml-2">
-              Start now
-            </button>
+            
+            <div className="flex items-center gap-2 pr-1">
+              <button 
+                onClick={() => signIn.social({ provider: 'google', callbackURL: '/gmail' })}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] transition-all hover:scale-105 shadow-sm"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </motion.div>
 
           <motion.p
