@@ -65,7 +65,7 @@ export default function Navbar() {
               Dashboard <ChevronRight className="w-4 h-4" />
             </Link>
           ) : (
-            <button onClick={() => signIn.social({ provider: 'google', callbackURL: '/gmail' })} className="bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/60 transition-all duration-300 flex items-center gap-1">
+            <button onClick={() => signIn.social({ provider: 'google', callbackURL: '/gmail' })} className="cursor-pointer bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/80 hover:scale-105 hover:shadow-lg transition-all duration-300 flex items-center gap-1">
               Sign in <ChevronRight className="w-4 h-4" />
             </button>
           )}
@@ -119,7 +119,7 @@ export default function Navbar() {
                   Dashboard <ChevronRight className="w-5 h-5" />
                 </Link>
               ) : (
-                <button onClick={() => { setIsOpen(false); signIn.social({ provider: 'google', callbackURL: '/gmail' }); }} className="bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-5 py-3 rounded-full text-lg font-semibold hover:bg-white/60 transition-all duration-300 flex items-center justify-center gap-2 w-full">
+                <button onClick={() => { setIsOpen(false); signIn.social({ provider: 'google', callbackURL: '/gmail' }); }} className="cursor-pointer bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-5 py-3 rounded-full text-lg font-semibold hover:bg-white/80 hover:scale-105 hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 w-full">
                   Sign in <ChevronRight className="w-5 h-5" />
                 </button>
               )}

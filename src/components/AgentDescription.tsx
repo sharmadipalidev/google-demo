@@ -13,8 +13,15 @@ export default function AgentDescription() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
           {/* Left Text Content */}
-          <div>
-
+          <div className="flex flex-col items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-[#4b4b4b] font-bold tracking-widest uppercase text-sm mb-4"
+            >
+              AI AGENT
+            </motion.div>
             
             <motion.h2
               initial={{ opacity: 0, y: 20 }}

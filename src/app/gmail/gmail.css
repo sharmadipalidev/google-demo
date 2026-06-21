@@ -10,6 +10,7 @@
   --bg-card: #ffffff;
   --bg-card-hover: #fafafa;
   --bg-elevated: #ffffff;
+  --bg-base: #ffffff;
 
   --border: rgba(0, 0, 0, 0.06);
   --border-focus: rgba(0, 0, 0, 0.15);
@@ -42,7 +43,7 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 10px var(--accent-glow);
-  --shadow-nav: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.1);
 
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -55,6 +56,7 @@
   --bg-card: #171717;
   --bg-card-hover: #1e1e1e;
   --bg-elevated: #222222;
+  --bg-base: #0a0a0a;
 
   --border: rgba(255, 255, 255, 0.06);
   --border-focus: rgba(163, 230, 53, 0.5);
@@ -90,7 +92,6 @@
 .sidebar {
   width: 260px;
   height: 100vh;
-  overflow-y: auto;
   background: var(--bg-surface);
   border-right: 1px solid var(--border);
   display: flex;
@@ -98,6 +99,7 @@
   padding: 24px 20px;
   gap: 20px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .sidebar-brand {
@@ -174,6 +176,23 @@
   flex-direction: column;
   gap: 2px;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar for sidebar nav */
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--border-focus);
+  border-radius: var(--radius-pill);
 }
 
 .nav-item {
@@ -243,8 +262,17 @@
 }
 
 @keyframes pulse-green {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-  50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
 }
 
 /* ── Main Content ──────────────────────────── */
@@ -261,8 +289,15 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .panel-header {
@@ -349,8 +384,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-back {
@@ -526,8 +566,15 @@
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .detail-card {
@@ -876,7 +923,9 @@
 }
 
 @keyframes spin-infinite {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-state {
@@ -1083,7 +1132,8 @@
   grid-template-columns: repeat(7, 1fr);
   flex: 1;
   background: var(--border);
-  gap: 1px; /* border hack */
+  gap: 1px;
+  /* border hack */
 }
 
 .calendar-cell {
@@ -1140,9 +1190,11 @@
 .calendar-events-container::-webkit-scrollbar {
   width: 4px;
 }
+
 .calendar-events-container::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .calendar-events-container::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
@@ -1177,7 +1229,10 @@
 /* ── Event Modal ────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   display: flex;
@@ -1231,17 +1286,72 @@
 }
 
 /* ── Google Calendar Colors ──────────────────────────── */
-.color-1 { background: #7986cb; color: #fff; } /* Lavender */
-.color-2 { background: #33b679; color: #fff; } /* Sage */
-.color-3 { background: #8e24aa; color: #fff; } /* Grape */
-.color-4 { background: #e67c73; color: #fff; } /* Flamingo */
-.color-5 { background: #f6c026; color: #111; } /* Banana */
-.color-6 { background: #f4511e; color: #fff; } /* Tangerine */
-.color-7 { background: #039be5; color: #fff; } /* Peacock */
-.color-8 { background: #616161; color: #fff; } /* Graphite */
-.color-9 { background: #3f51b5; color: #fff; } /* Blueberry */
-.color-10 { background: #0b8043; color: #fff; } /* Basil */
-.color-11 { background: #d50000; color: #fff; } /* Tomato */
+.color-1 {
+  background: #7986cb;
+  color: #fff;
+}
+
+/* Lavender */
+.color-2 {
+  background: #33b679;
+  color: #fff;
+}
+
+/* Sage */
+.color-3 {
+  background: #8e24aa;
+  color: #fff;
+}
+
+/* Grape */
+.color-4 {
+  background: #e67c73;
+  color: #fff;
+}
+
+/* Flamingo */
+.color-5 {
+  background: #f6c026;
+  color: #111;
+}
+
+/* Banana */
+.color-6 {
+  background: #f4511e;
+  color: #fff;
+}
+
+/* Tangerine */
+.color-7 {
+  background: #039be5;
+  color: #fff;
+}
+
+/* Peacock */
+.color-8 {
+  background: #616161;
+  color: #fff;
+}
+
+/* Graphite */
+.color-9 {
+  background: #3f51b5;
+  color: #fff;
+}
+
+/* Blueberry */
+.color-10 {
+  background: #0b8043;
+  color: #fff;
+}
+
+/* Basil */
+.color-11 {
+  background: #d50000;
+  color: #fff;
+}
+
+/* Tomato */
 
 /* ── Time Grid View (Week & Day) ───────────────────────── */
 .time-grid-container {
@@ -1262,6 +1372,7 @@
   background: var(--bg-elevated);
   overflow-y: scroll;
 }
+
 .time-grid-header::-webkit-scrollbar {
   visibility: hidden;
 }
@@ -1312,7 +1423,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  margin-left: -6px; /* Offset the padding slightly so the circle aligns visually with the text */
+  margin-left: -6px;
+  /* Offset the padding slightly so the circle aligns visually with the text */
 }
 
 .time-grid-day-header.today .day-name {
@@ -1332,7 +1444,8 @@
 
 .time-grid-body {
   display: flex;
-  min-height: 1440px; /* 24 hours * 60px */
+  min-height: 1440px;
+  /* 24 hours * 60px */
   position: relative;
 }
 
@@ -1388,7 +1501,7 @@
   font-size: 11px;
   line-height: 1.3;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   cursor: pointer;

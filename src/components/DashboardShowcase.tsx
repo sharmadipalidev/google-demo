@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function DashboardShowcase() {
   return (
-    <section className="relative w-full py-20 bg-bg-base overflow-hidden flex justify-center items-center px-4 md:px-8">
+    <section className="relative w-full pt-0 pb-20 bg-bg-base overflow-hidden flex justify-center items-center px-4 md:px-8">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}

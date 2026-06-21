@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import { Mic, Send, Bot, Sparkles, X, Edit2 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 // Add TypeScript definitions for Web Speech API
 declare global {
@@ -83,7 +84,7 @@ export function AssistantPanel() {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in your browser. Please try Chrome or Edge.");
+      toast.error("Speech recognition is not supported in your browser. Please try Chrome or Edge.");
       return;
     }
     
@@ -169,10 +170,7 @@ export function AssistantPanel() {
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-center max-w-2xl mx-auto">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green dark:text-white shadow-sm transition-colors">
-              <Bot className="w-7 h-7" />
-            </div>
-            
+
             <h2 className="text-xl font-bold text-[#1a1a1a] dark:text-white mb-2 transition-colors">Your personal AI operator.</h2>
             <p className="text-sm text-[#8e8e8e] dark:text-zinc-500 max-w-md mx-auto mb-8 leading-relaxed transition-colors">
               Ask neurosync to summarize threads, schedule meetings, draft replies, or organize your inbox securely.

@@ -41,7 +41,7 @@ export const corsairEntities = pgTable("corsair_entities", {
     .defaultNow(),
   accountId: text("account_id")
     .notNull()
-    .references(() => corsairAccounts.id),
+    .references(() => corsairAccounts.id, { onDelete: "cascade" }),
   entityId: text("entity_id").notNull(),
   entityType: text("entity_type").notNull(),
   version: text("version").notNull(),
@@ -58,7 +58,7 @@ export const corsairEvents = pgTable("corsair_events", {
     .defaultNow(),
   accountId: text("account_id")
     .notNull()
-    .references(() => corsairAccounts.id),
+    .references(() => corsairAccounts.id, { onDelete: "cascade" }),
   eventType: text("event_type").notNull(),
   payload: jsonb("payload").notNull().default({}),
   status: text("status"),

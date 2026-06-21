@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { eq, and } from "drizzle-orm";
+import { corsairAccounts, corsairIntegrations } from "@/server/db/schema";
 
 export const gmailRouter = createTRPCRouter({
   // List messages from Gmail
@@ -20,23 +22,25 @@ export const gmailRouter = createTRPCRouter({
 
       if (!result.messages) return result;
 
-      // Fetch metadata (Subject, From) for each message in the list
+      // Fetch only metadata (headers) for each message — NOT full body content.
+      // Full content is fetched on-demand when user opens a specific message.
       const messagesWithDetails = await Promise.all(
         result.messages.map(async (msg) => {
           if (!msg.id) return msg;
           try {
-            const fullMsg = await ctx.tenant.gmail.api.messages.get({
+            const metaMsg = await ctx.tenant.gmail.api.messages.get({
               id: msg.id,
-              format: "full",
+              format: "metadata"
             });
             return {
               ...msg,
-              payload: fullMsg.payload,
-              snippet: fullMsg.snippet || msg.snippet,
-              internalDate: fullMsg.internalDate || msg.internalDate,
+              payload: metaMsg.payload,
+              snippet: metaMsg.snippet || msg.snippet,
+              internalDate: metaMsg.internalDate || msg.internalDate,
+              labelIds: metaMsg.labelIds || msg.labelIds,
             };
           } catch (e) {
-            console.error(`Failed to fetch message details for ${msg.id}`, e);
+            console.error(`Failed to fetch message metadata for ${msg.id}`, e);
             return msg;
           }
         })
@@ -84,11 +88,54 @@ export const gmailRouter = createTRPCRouter({
     return counts;
   }),
 
+  // Get Overview Stats
+  getOverviewStats: protectedProcedure.query(async ({ ctx }) => {
+    const labelsToFetch = ["INBOX", "SENT", "DRAFT", "SPAM", "TRASH", "STARRED"];
+    const stats = {
+      inbox: { total: 0, unread: 0 },
+      sent: { total: 0 },
+      drafts: { total: 0 },
+      spam: { total: 0, unread: 0 },
+      trash: { total: 0 },
+      starred: { total: 0 },
+    };
+
+    await Promise.all(
+      labelsToFetch.map(async (labelId) => {
+        try {
+          const label = await ctx.tenant.gmail.api.labels.get({ id: labelId });
+          const total = label.messagesTotal ?? 0;
+          const unread = label.messagesUnread ?? 0;
+          
+          if (labelId === "INBOX") {
+            stats.inbox.total = total;
+            stats.inbox.unread = unread;
+          } else if (labelId === "SENT") {
+            stats.sent.total = total;
+          } else if (labelId === "DRAFT") {
+            stats.drafts.total = total;
+          } else if (labelId === "SPAM") {
+            stats.spam.total = total;
+            stats.spam.unread = unread;
+          } else if (labelId === "TRASH") {
+            stats.trash.total = total;
+          } else if (labelId === "STARRED") {
+            stats.starred.total = total;
+          }
+        } catch (e) {
+          console.error(`Failed to fetch label stats for ${labelId}`, e);
+        }
+      })
+    );
+
+    return stats;
+  }),
+
   // List drafts
   listDrafts: protectedProcedure
     .input(
       z.object({
-        maxResults: z.number().min(1).max(50).optional().default(10),
+        maxResults: z.number().min(1).max(50).optional().default(15),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -143,14 +190,57 @@ export const gmailRouter = createTRPCRouter({
       return result;
     }),
 
-  // Webhook health check
+  // Webhook health check & connected plugins
   webhookStatus: protectedProcedure.query(async ({ ctx }) => {
+    const integrations = await ctx.db
+      .select({ 
+        name: corsairIntegrations.name,
+        config: corsairAccounts.config
+      })
+      .from(corsairAccounts)
+      .innerJoin(
+        corsairIntegrations,
+        eq(corsairAccounts.integrationId, corsairIntegrations.id)
+      )
+      .where(eq(corsairAccounts.tenantId, ctx.userId));
+
+    // Only include plugins that have actual credentials stored in their config
+    const plugins = integrations
+      .filter((i) => {
+        const conf = i.config as Record<string, any> | null;
+        return conf && Object.keys(conf).length > 0;
+      })
+      .map((i) => i.name);
+
     return {
       status: "active",
       endpoint: "/api/webhooks",
       userId: ctx.userId,
-      plugins: ["gmail", "googlecalendar"],
+      plugins,
       timestamp: new Date().toISOString(),
     };
   }),
+
+  // Disconnect a specific plugin
+  disconnectPlugin: protectedProcedure
+    .input(z.object({ plugin: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const integrationRow = await ctx.db
+        .select({ id: corsairIntegrations.id })
+        .from(corsairIntegrations)
+        .where(eq(corsairIntegrations.name, input.plugin))
+        .limit(1);
+
+      if (integrationRow.length > 0) {
+        await ctx.db
+          .delete(corsairAccounts)
+          .where(
+            and(
+              eq(corsairAccounts.tenantId, ctx.userId),
+              eq(corsairAccounts.integrationId, integrationRow[0]?.id as string)
+            )
+          );
+      }
+      return { success: true };
+    }),
 });

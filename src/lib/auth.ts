@@ -6,34 +6,11 @@ import * as schema from "@/server/db/schema";
 import { setupCorsair } from "corsair";
 import { corsair } from "@/server/corsair";
 
-async function syncGoogleTokens(account: any) {
-  if (account.providerId !== "google") return;
+// NOTE: syncGoogleTokens was removed. Better Auth sign-in now only requests
+// profile + email scopes. Gmail/Calendar tokens are managed entirely by
+// Corsair's own OAuth flow via /api/connect?plugin=gmail|googlecalendar.
 
-  const tenant = corsair.withTenant(account.userId);
-  const tasks = [];
 
-  if (account.accessToken) {
-    tasks.push(tenant.gmail.keys.set_access_token(account.accessToken));
-    tasks.push(
-      tenant.googlecalendar.keys.set_access_token(account.accessToken),
-    );
-  }
-
-  if (account.refreshToken) {
-    tasks.push(tenant.gmail.keys.set_refresh_token(account.refreshToken));
-    tasks.push(
-      tenant.googlecalendar.keys.set_refresh_token(account.refreshToken),
-    );
-  }
-
-  if (account.accessTokenExpiresAt) {
-    const expires = account.accessTokenExpiresAt.toISOString();
-    tasks.push(tenant.gmail.keys.set_expires_at(expires));
-    tasks.push(tenant.googlecalendar.keys.set_expires_at(expires));
-  }
-
-  await Promise.all(tasks);
-}
 
 export const auth = betterAuth({
   secret:
@@ -81,23 +58,11 @@ export const auth = betterAuth({
         after: async (account) => {
           if (account.providerId === "google") {
             try {
-              // Ensure Corsair tenant exists before syncing tokens
+              // Ensure Corsair tenant exists — token sync is handled by Corsair OAuth
               await setupCorsair(corsair, { tenantId: account.userId });
-              await syncGoogleTokens(account);
-              console.log("[Auth Hook] Google tokens synced for user:", account.userId);
+              console.log("[Auth Hook] Corsair tenant ensured for user:", account.userId);
             } catch (err) {
-              console.error("[Auth Hook] Failed to sync Google tokens:", err);
-            }
-          }
-        },
-      },
-      update: {
-        after: async (account) => {
-          if (account.providerId === "google") {
-            try {
-              await syncGoogleTokens(account);
-            } catch (err) {
-              console.error("[Auth Hook] Failed to update Google tokens:", err);
+              console.error("[Auth Hook] Failed to setup Corsair tenant:", err);
             }
           }
         },
@@ -110,13 +75,10 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       accessType: "offline",
-      prompt: "select_account consent",
+      prompt: "select_account",
       scope: [
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://www.googleapis.com/auth/gmail.labels",
-        "https://www.googleapis.com/auth/gmail.compose",
-        "https://www.googleapis.com/auth/gmail.modify",
-        "https://www.googleapis.com/auth/calendar",
+        "profile",
+        "email",
       ],
     },
   },

@@ -31,12 +31,22 @@ export default function ImpactStats() {
           <motion.h2
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-[#4b4b4b] font-bold tracking-widest uppercase text-sm mb-3"
+          >
+            Measurable Impact
+          </motion.h2>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl md:text-5xl font-display font-medium text-[#1a1a1a] leading-tight tracking-tight mb-5"
           >
             Automate your workspace instantly
-          </motion.h2>
+          </motion.p>
           
           <motion.p
             initial={{ opacity: 0, y: 15 }}

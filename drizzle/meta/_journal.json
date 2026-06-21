@@ -15,6 +15,13 @@
       "when": 1781864692749,
       "tag": "0001_amusing_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781893224950,
+      "tag": "0002_parallel_rhodey",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@ import { Mail, Bot } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[110vh] sm:min-h-[140vh] w-full flex flex-col items-center justify-start overflow-hidden bg-bg-base transition-colors duration-300">
+    <section className="relative min-h-[105vh] sm:min-h-[132vh] w-full flex flex-col items-center justify-start overflow-hidden bg-bg-base transition-colors duration-300">
       
       {/* Background Video Container */}
       <div className="absolute top-[10vh] sm:top-[12vh] left-0 w-full h-[95vh] sm:h-[120vh] z-0 pointer-events-none">

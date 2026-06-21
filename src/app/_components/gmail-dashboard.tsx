@@ -1,11 +1,23 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { api } from "@/trpc/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
-import { useSession, signOut } from "@/lib/auth-client";
+import { authClient, useSession, signOut } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
-import { Star, ShieldAlert, Trash2 } from "lucide-react";
+import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { toast } from "sonner";
+import { RecentTasks } from "./recent-tasks";
+import { EmailActivityChart } from "./email-activity-chart";
 // ─── Helpers ──────────────────────────────────────────────
 function extractHeader(
   headers: Array<{ name?: string; value?: string }> | undefined,
@@ -96,6 +108,7 @@ export default function GmailDashboard() {
   const user = session?.user;
   const fullName = user?.name || "User";
   const avatarInitials = fullName.charAt(0).toUpperCase();
+  const queryClient = useQueryClient();
 
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -105,9 +118,32 @@ export default function GmailDashboard() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarDropdownOpen, setCalendarDropdownOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const [isAgentic, setIsAgentic] = useState(false);
   const [inboxCategory, setInboxCategory] = useState<"primary" | "promotions" | "social" | "updates">("primary");
+
+  // ── Profile state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileName, setProfileName] = useState(fullName);
+  const [profileEmail, setProfileEmail] = useState(user?.email || "user@example.com");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const handleSaveProfile = async () => {
+    setIsSavingSettings(true);
+    try {
+      if (profileName !== fullName) {
+        await authClient.updateUser({ name: profileName });
+      }
+      setIsEditingProfile(false);
+      toast.success("Profile saved successfully.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to save profile.");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   // ── Pagination state
   const [pageTokens, setPageTokens] = useState<string[]>([]);
@@ -135,28 +171,76 @@ export default function GmailDashboard() {
     return "";
   }, [activeTab, inboxCategory]);
 
+  const webhookQuery = api.gmail.webhookStatus.useQuery(undefined);
+  const utils = api.useUtils();
+
+  const hasGmail = webhookQuery.data?.plugins?.includes("gmail") ?? false;
+  const hasCalendar = webhookQuery.data?.plugins?.includes("googlecalendar") ?? false;
+
   const messagesQuery = api.gmail.listMessages.useQuery(
-    { maxResults: 15, q: searchQuery || defaultQuery || undefined, pageToken: pageTokens[currentPageIndex] || undefined },
-    { enabled: ["inbox", "starred", "sent", "spam", "trash"].includes(activeTab), refetchInterval: 3000 },
+    { maxResults: 10, q: searchQuery || defaultQuery || undefined, pageToken: pageTokens[currentPageIndex] || undefined },
+    { enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab), refetchInterval: 30000 },
   );
 
   const labelsQuery = api.gmail.listLabels.useQuery(undefined, {
-    enabled: activeTab === "labels",
+    enabled: hasGmail && activeTab === "labels",
   });
 
   const categoryCountsQuery = api.gmail.getCategoryCounts.useQuery(undefined, {
-    enabled: activeTab === "inbox",
+    enabled: hasGmail && activeTab === "inbox",
     refetchInterval: 5000,
+  });
+
+  
+  const overviewStatsQuery = api.gmail.getOverviewStats.useQuery(undefined, {
+    enabled: hasGmail && activeTab === "overview",
+    refetchInterval: 10000,
   });
 
   const draftsQuery = api.gmail.listDrafts.useQuery(
     { maxResults: 15 },
-    { enabled: activeTab === "drafts" },
+    { enabled: hasGmail && activeTab === "drafts" },
   );
 
-  const webhookQuery = api.gmail.webhookStatus.useQuery(undefined, {
-    enabled: activeTab === "webhook",
+  const disconnectPlugin = api.gmail.disconnectPlugin.useMutation({
+    onMutate: async (variables) => {
+      await utils.gmail.webhookStatus.cancel();
+      const previous = utils.gmail.webhookStatus.getData();
+      if (previous) {
+        utils.gmail.webhookStatus.setData(undefined, {
+          ...previous,
+          plugins: previous.plugins.filter((p: string) => p !== variables.plugin)
+        });
+      }
+      return { previous };
+    },
+    onSuccess: () => {
+      utils.gmail.webhookStatus.invalidate();
+      toast.success("Disconnected successfully");
+    },
+    onError: (e, _, context: any) => {
+      if (context?.previous) {
+        utils.gmail.webhookStatus.setData(undefined, context.previous);
+      }
+      toast.error(`Disconnect failed: ${e.message}`);
+    }
   });
+
+  // ── Connect Modal State
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const pluginsKey = webhookQuery.data?.plugins?.join(",") || "";
+
+  useEffect(() => {
+    if (webhookQuery.data) {
+      const hasGmail = webhookQuery.data.plugins?.includes("gmail");
+      const hasCalendar = webhookQuery.data.plugins?.includes("googlecalendar");
+      if (!hasGmail || !hasCalendar) {
+        setShowConnectModal(true);
+      } else {
+        setShowConnectModal(false);
+      }
+    }
+  }, [pluginsKey, webhookQuery.data]);
 
   // ── Calendar View State
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
@@ -199,7 +283,7 @@ export default function GmailDashboard() {
 
   const calendarQuery = api.calendar.listEvents.useQuery(
     { maxResults: 100, q: searchQuery || undefined, timeMin, timeMax },
-    { enabled: activeTab === "calendar", refetchInterval: 3000 },
+    { enabled: hasCalendar && (activeTab === "calendar" || activeTab === "overview"), refetchInterval: 30000 },
   );
 
   // ── Calendar Grid Logic
@@ -226,27 +310,27 @@ export default function GmailDashboard() {
     onSuccess: () => {
       setIsEventModalOpen(false);
       calendarQuery.refetch();
-      alert("Event created!");
+      toast.success("Event created!");
     },
-    onError: (e) => alert(`Failed to create event: ${e.message}`)
+    onError: (e) => toast.error(`Failed to create event: ${e.message}`)
   });
 
   const updateEventMutation = api.calendar.updateEvent.useMutation({
     onSuccess: () => {
       setIsEventModalOpen(false);
       calendarQuery.refetch();
-      alert("Event updated!");
+      toast.success("Event updated!");
     },
-    onError: (e) => alert(`Failed to update event: ${e.message}`)
+    onError: (e) => toast.error(`Failed to update event: ${e.message}`)
   });
 
   const deleteEventMutation = api.calendar.deleteEvent.useMutation({
     onSuccess: () => {
       setIsEventModalOpen(false);
       calendarQuery.refetch();
-      alert("Event deleted!");
+      toast.success("Event deleted!");
     },
-    onError: (e) => alert(`Failed to delete event: ${e.message}`)
+    onError: (e) => toast.error(`Failed to delete event: ${e.message}`)
   });
 
   const handleDeleteEvent = () => {
@@ -315,20 +399,79 @@ export default function GmailDashboard() {
       setComposeTo("");
       setComposeSubject("");
       setComposeBody("");
-      alert("Email sent!");
+      toast.success("Email sent!");
     },
-    onError: (e) => alert(`Send failed: ${e.message}`),
+    onError: (e) => toast.error(`Send failed: ${e.message}`),
   });
 
+  // Compute stable query key for optimistic cache updates
+  const messagesQueryInput = useMemo(() => ({
+    maxResults: 10,
+    q: searchQuery || defaultQuery || undefined,
+    pageToken: pageTokens[currentPageIndex] || undefined,
+  }), [searchQuery, defaultQuery, pageTokens, currentPageIndex]);
+
   const modifyMutation = api.gmail.modifyMessage.useMutation({
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: [['gmail', 'listMessages']] });
+
+      // Snapshot the previous messages data
+      const previousData = messagesQuery.data;
+
+      // Optimistically update the messages query cache
+      if (previousData?.messages) {
+        const updatedMessages = previousData.messages.map((msg: any) => {
+          if (msg.id !== variables.id) return msg;
+          let newLabels = [...(msg.labelIds || [])];
+          // Add labels
+          if (variables.addLabelIds) {
+            for (const lbl of variables.addLabelIds) {
+              if (!newLabels.includes(lbl)) newLabels.push(lbl);
+            }
+          }
+          // Remove labels
+          if (variables.removeLabelIds) {
+            newLabels = newLabels.filter((l: string) => !variables.removeLabelIds!.includes(l));
+          }
+          return { ...msg, labelIds: newLabels };
+        })
+        // Remove from list if moved to trash/spam (user expects it to vanish)
+        .filter((msg: any) => {
+          if (variables.addLabelIds?.includes('TRASH') || variables.addLabelIds?.includes('SPAM')) {
+            return msg.id !== variables.id;
+          }
+          return true;
+        });
+
+        // Use queryKey filter to update all matching listMessages queries
+        queryClient.setQueriesData(
+          { queryKey: [['gmail', 'listMessages']] },
+          (old: any) => old ? { ...old, messages: updatedMessages } : old
+        );
+      }
+
+      return { previousData };
+    },
     onSuccess: () => {
+      // Background refetch to sync with server truth
       messagesQuery.refetch();
       selectedMessage.refetch();
     },
-    onError: (e) => alert(`Action failed: ${e.message}`),
+    onError: (e, _variables, context: any) => {
+      // Roll back on error
+      if (context?.previousData) {
+        queryClient.setQueriesData(
+          { queryKey: [['gmail', 'listMessages']] },
+          (old: any) => old ? context.previousData : old
+        );
+      }
+      toast.error(`Action failed: ${e.message}`);
+    },
   });
 
   const primaryTabs: { key: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    { key: "overview", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg> },
     { key: "inbox", label: "Inbox", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> },
     { key: "starred", label: "Starred", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> },
     { key: "sent", label: "Sent", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> },
@@ -453,7 +596,7 @@ export default function GmailDashboard() {
         </nav>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "transparent", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.2s", width: '100%' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", background: "transparent", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", width: '100%' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--text-primary)', color: 'var(--bg-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px' }}>
               {user?.image ? <img src={user.image} alt={fullName} style={{ width: '100%', height: '100%', borderRadius: '50%' }} /> : avatarInitials}
             </div>
@@ -461,8 +604,8 @@ export default function GmailDashboard() {
               {fullName}
             </span>
           </div>
-          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } }})} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-            <span style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}>
+          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } }})} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg">
+            <span style={{ display: 'flex', alignItems: 'center', opacity: 0.8 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </span>
             Logout
@@ -472,6 +615,245 @@ export default function GmailDashboard() {
 
       {/* ── Main Content ─────────────────────────── */}
       <main className="main-content">
+        
+        
+                {/* ── Overview Dashboard (Image Replica) ── */}
+        {activeTab === "overview" && (
+          <section className="panel" id="panel-overview" style={{ padding: '32px', background: 'var(--bg-base)' }}>
+            
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-display font-bold text-text-primary">
+                Welcome back {fullName?.split(' ')[0] || "Taylor"}
+              </h2>
+              
+
+            </div>
+
+            {/* Quick Stats Row */}
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-text-primary">Quick Stats</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 items-start">
+              {/* Inbox Card */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-black dark:text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-semibold text-text-primary">Inbox</h4>
+                    <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.inbox?.total.toLocaleString() || "0"} Emails</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Sent Card */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                    <Send className="w-5 h-5 text-black dark:text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-semibold text-text-primary">Sent Items</h4>
+                    <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.sent?.total.toLocaleString() || "0"} Emails</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Drafts Card */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                    <FileEdit className="w-5 h-5 text-black dark:text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-semibold text-text-primary">Drafts</h4>
+                    <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.drafts?.total.toLocaleString() || "0"} Saved</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Starred Card */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                    <Star className="w-5 h-5 text-black dark:text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-semibold text-text-primary">Starred</h4>
+                    <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.starred?.total?.toLocaleString() || "0"} Emails</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              
+              {/* Activity Chart */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col relative">
+                
+                <EmailActivityChart />
+              </div>
+
+              {/* Daily Schedule */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col">
+                <h3 className="text-lg font-semibold text-text-primary mb-6">Daily Schedule</h3>
+                <div className="space-y-4 flex-1">
+                  {calendarQuery.data?.items ? (
+                    calendarQuery.data.items.slice(0, 4).map((event: any, i: number) => {
+                      const colors = ['bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-black dark:text-white'];
+                      const c = colors[0];
+                      return (
+                        <div key={i} className="flex items-center gap-4 group cursor-pointer p-1">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${c}`}>
+                            <CalendarIcon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold text-text-primary truncate">{event.summary || "Busy"}</h4>
+                            <p className="text-xs text-text-secondary truncate mt-0.5">Event - Google Calendar</p>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div className="text-sm text-text-secondary text-center py-4">Loading agenda...</div>
+                  )}
+                  {calendarQuery.data?.items && calendarQuery.data.items.length === 0 && (
+                    <div className="text-sm text-text-secondary py-4 text-center">No upcoming events today.</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Calendar Widget */}
+              <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <button onClick={handlePrev} className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <h3 className="font-semibold text-text-primary text-[15px]">{currentMonthName}, {calYear}</h3>
+                  <button onClick={handleNext} className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-7 gap-y-4 gap-x-1 text-center mb-4">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                    <div key={i} className="text-[13px] font-semibold text-text-primary">{day}</div>
+                  ))}
+                </div>
+                
+                <div className="grid grid-cols-7 gap-y-4 gap-x-1 text-center text-[13px] font-medium flex-1 content-start">
+                  {/* Empty cells */}
+                  {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                    <div key={`empty-${i}`} className="text-text-secondary opacity-30 flex items-center justify-center h-8">
+                      {30 - firstDayOfMonth + i}
+                    </div>
+                  ))}
+                  {/* Days */}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const realToday = new Date();
+                    const isToday = calYear === realToday.getFullYear() && calMonth === realToday.getMonth() && i + 1 === realToday.getDate();
+                    return (
+                      <div key={`day-${i}`} className="flex justify-center items-center h-8">
+                        <span className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isToday ? 'bg-text-primary text-bg-base font-bold' : 'text-text-secondary hover:bg-bg-base hover:text-text-primary cursor-pointer'}`}>
+                          {i + 1}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left Column: Progress Rows */}
+              <div className="col-span-1 lg:col-span-2">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-text-primary">System Quota</h3>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {/* Storage Progress */}
+                  <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex items-center justify-between group cursor-pointer hover:border-text-primary/20 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-[1.25rem] bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-black dark:text-white"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                      </div>
+                      <div>
+                        <h4 className="text-[15px] font-semibold text-text-primary mb-1">Drive & Email Storage</h4>
+                        <div className="flex items-center gap-2">
+                          <img src={user?.image || "/logo.svg"} alt="Avatar" className="w-5 h-5 rounded-full object-cover" />
+                          <span className="text-xs text-text-secondary">{fullName || "User"}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-8">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-xs text-text-secondary mb-1">Remaining</p>
+                        <p className="text-sm font-semibold text-text-primary">10.8 GB</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 relative flex items-center justify-center">
+                          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" strokeDashoffset="85" className="text-text-primary" strokeLinecap="round" />
+                          </svg>
+                          <span className="text-[11px] font-semibold text-text-primary relative z-10">28%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Token Progress */}
+                  <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex items-center justify-between group cursor-pointer hover:border-text-primary/20 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-[1.25rem] bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                        <Activity className="w-6 h-6 text-black dark:text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-[15px] font-semibold text-text-primary mb-1">AI Tokens Limit</h4>
+                        <div className="flex items-center gap-2">
+                          <img src={user?.image || "/logo.svg"} alt="Avatar" className="w-5 h-5 rounded-full object-cover" />
+                          <span className="text-xs text-text-secondary">{fullName || "User"}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-8">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-xs text-text-secondary mb-1">Remaining</p>
+                        <p className="text-sm font-semibold text-text-primary">255k</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 relative flex items-center justify-center">
+                          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" strokeDashoffset="65" className="text-text-primary" strokeLinecap="round" />
+                          </svg>
+                          <span className="text-[11px] font-semibold text-text-primary relative z-10">49%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Assignments -> Recent Urgent */}
+              <RecentTasks />
+
+            </div>
+          </section>
+        )}
+
+
         {/* ── Message Lists (Inbox, Starred, Sent, Spam, Trash) ── */}
         {["inbox", "starred", "sent", "spam", "trash"].includes(activeTab) && (
           <section className="panel" id={`panel-${activeTab}`}>
@@ -686,13 +1068,7 @@ export default function GmailDashboard() {
                       }
                     })()}
                   </div>
-                  {selectedMessage.data.labelIds && (
-                    <div className="detail-labels">
-                      {selectedMessage.data.labelIds.map((lbl) => (
-                        <span key={lbl} className="label-chip">{lbl}</span>
-                      ))}
-                    </div>
-                  )}
+
                 </div>
               </div>
             )}
@@ -1191,18 +1567,28 @@ export default function GmailDashboard() {
 
               {/* Profile Section */}
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
-                <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Profile</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Profile</h3>
+                  <button onClick={() => setIsEditingProfile(!isEditingProfile)} style={{ background: 'transparent', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
+                    {isEditingProfile ? "Cancel" : "Edit"}
+                  </button>
+                </div>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Manage your public profile and personal details.</p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Display Name</label>
-                    <input type="text" defaultValue={fullName} style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', width: '100%', outline: 'none' }} />
+                    <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} disabled={!isEditingProfile} style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: isEditingProfile ? 'var(--bg-card)' : 'var(--bg-deep)', color: isEditingProfile ? 'var(--text-primary)' : 'var(--text-secondary)', width: '100%', outline: 'none' }} />
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Email Address</label>
-                    <input type="email" defaultValue="user@example.com" disabled style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-deep)', color: 'var(--text-secondary)', width: '100%', cursor: 'not-allowed', outline: 'none' }} />
+                    <input type="email" value={profileEmail} disabled style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-deep)', color: 'var(--text-secondary)', width: '100%', outline: 'none', cursor: 'not-allowed' }} />
                   </div>
+                  {isEditingProfile && (
+                    <button onClick={handleSaveProfile} disabled={isSavingSettings} style={{ background: 'var(--text-primary)', color: 'var(--bg-deep)', padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: isSavingSettings ? 'not-allowed' : 'pointer', fontSize: '13px', alignSelf: 'flex-start', opacity: isSavingSettings ? 0.7 : 1 }}>
+                      {isSavingSettings ? "Saving..." : "Save Profile"}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1223,19 +1609,16 @@ export default function GmailDashboard() {
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Read, send, and manage your emails</div>
                       </div>
                     </div>
-                    <a
-                      href="/api/connect?plugin=gmail"
-                      style={{
-                        padding: '8px 20px', borderRadius: '8px', border: '1px solid var(--border)',
-                        background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontWeight: 600,
-                        fontSize: '13px', cursor: 'pointer', textDecoration: 'none',
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                      Connect Gmail
-                    </a>
+                    {webhookQuery.data?.plugins?.includes("gmail") ? (
+                      <button onClick={() => disconnectPlugin.mutate({ plugin: "gmail" })} disabled={disconnectPlugin.isPending} style={{ color: '#ef4444', fontWeight: 600, fontSize: '13px', padding: '8px 20px', border: '1px solid #ef4444', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', transition: 'all 0.2s', opacity: disconnectPlugin.isPending ? 0.5 : 1 }}>
+                        {disconnectPlugin.isPending ? "Disconnecting..." : "Disconnect"}
+                      </button>
+                    ) : (
+                      <a href="/api/connect?plugin=gmail" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', color: 'var(--text-primary)', fontWeight: 600, fontSize: '13px', padding: '8px 20px', border: '1px solid var(--border)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                        <Link2 size={16} />
+                        Connect Gmail
+                      </a>
+                    )}
                   </div>
 
                   {/* Google Calendar */}
@@ -1249,19 +1632,16 @@ export default function GmailDashboard() {
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>View, create, and manage your events</div>
                       </div>
                     </div>
-                    <a
-                      href="/api/connect?plugin=googlecalendar"
-                      style={{
-                        padding: '8px 20px', borderRadius: '8px', border: '1px solid var(--border)',
-                        background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontWeight: 600,
-                        fontSize: '13px', cursor: 'pointer', textDecoration: 'none',
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                      Connect Calendar
-                    </a>
+                    {webhookQuery.data?.plugins?.includes("googlecalendar") ? (
+                      <button onClick={() => disconnectPlugin.mutate({ plugin: "googlecalendar" })} disabled={disconnectPlugin.isPending} style={{ color: '#ef4444', fontWeight: 600, fontSize: '13px', padding: '8px 20px', border: '1px solid #ef4444', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', transition: 'all 0.2s', opacity: disconnectPlugin.isPending ? 0.5 : 1 }}>
+                        {disconnectPlugin.isPending ? "Disconnecting..." : "Disconnect"}
+                      </button>
+                    ) : (
+                      <a href="/api/connect?plugin=googlecalendar" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', color: 'var(--text-primary)', fontWeight: 600, fontSize: '13px', padding: '8px 20px', border: '1px solid var(--border)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                        <Link2 size={16} />
+                        Connect Calendar
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -1325,20 +1705,21 @@ export default function GmailDashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Default Action</label>
-                    <select style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', width: '100%', outline: 'none', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238b8b9e%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '10px' }}>
-                      <option>Draft replies automatically</option>
-                      <option>Ask for permission first</option>
-                      <option>Only read emails</option>
-                    </select>
+                    <Select defaultValue="draft">
+                      <SelectTrigger className="w-full bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-primary)]">
+                        <SelectValue placeholder="Select an action" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[var(--bg-card)] border-[var(--border)]">
+                        <SelectItem value="draft" className="text-[var(--text-primary)] focus:bg-[var(--bg-elevated)] cursor-pointer">Draft replies automatically</SelectItem>
+                        <SelectItem value="ask" className="text-[var(--text-primary)] focus:bg-[var(--bg-elevated)] cursor-pointer">Ask for permission first</SelectItem>
+                        <SelectItem value="read" className="text-[var(--text-primary)] focus:bg-[var(--bg-elevated)] cursor-pointer">Only read emails</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <button style={{ background: 'var(--text-primary)', color: 'var(--bg-deep)', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
-                  Save Changes
-                </button>
-              </div>
+
 
             </div>
           </section>
@@ -1358,11 +1739,17 @@ export default function GmailDashboard() {
               <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>Start Time</label>
-                  <input type="datetime-local" value={editingEventData.start} onChange={e => setEditingEventData({ ...editingEventData, start: e.target.value })} required />
+                  <DateTimePicker 
+                    value={editingEventData.start} 
+                    onChange={val => setEditingEventData({ ...editingEventData, start: val })} 
+                  />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>End Time</label>
-                  <input type="datetime-local" value={editingEventData.end} onChange={e => setEditingEventData({ ...editingEventData, end: e.target.value })} required />
+                  <DateTimePicker 
+                    value={editingEventData.end} 
+                    onChange={val => setEditingEventData({ ...editingEventData, end: val })} 
+                  />
                 </div>
               </div>
               <div className="form-group">
@@ -1393,6 +1780,52 @@ export default function GmailDashboard() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Connect Modal ────────────────────────────── */}
+      {showConnectModal && (
+        <div className="modal-overlay" onClick={() => setShowConnectModal(false)} style={{ zIndex: 9999 }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', padding: '32px' }}>
+            <button 
+              onClick={() => setShowConnectModal(false)}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+            </button>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>Connect Accounts</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>To use the dashboard, please connect your Google accounts.</p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {!webhookQuery.data?.plugins?.includes("gmail") && (
+                <a
+                  href="/api/connect?plugin=gmail"
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 500, transition: 'all 0.2s' }}
+                  className="hover:border-black/20 dark:hover:border-white/20 hover:shadow-sm"
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #EA4335 0%, #FBBC04 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Mail size={20} color="white" />
+                  </div>
+                  Connect Gmail
+                </a>
+              )}
+              
+              {!webhookQuery.data?.plugins?.includes("googlecalendar") && (
+                <a
+                  href="/api/connect?plugin=googlecalendar"
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 500, transition: 'all 0.2s' }}
+                  className="hover:border-black/20 dark:hover:border-white/20 hover:shadow-sm"
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #4285F4 0%, #34A853 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CalendarIcon size={20} color="white" />
+                  </div>
+                  Connect Calendar
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}
