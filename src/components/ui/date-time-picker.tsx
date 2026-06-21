@@ -91,17 +91,15 @@ export function DateTimePicker({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal bg-[#1a1a1a] dark:bg-zinc-900 border border-black/10 dark:border-white/10 text-[#1a1a1a] dark:text-white hover:bg-black/5 dark:hover:bg-white/5",
-            !date && "text-muted-foreground"
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") + " " + time : <span>Pick date & time</span>}
-        </Button>
+      <PopoverTrigger 
+        className={cn(
+          "inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 px-3 py-2",
+          "w-full justify-start text-left font-normal bg-white dark:bg-zinc-900 border-black/10 dark:border-white/10 text-[#1a1a1a] dark:text-white hover:bg-black/5 dark:hover:bg-white/5",
+          !date && "text-muted-foreground"
+        )}
+      >
+        <CalendarIcon className="mr-2 h-4 w-4" />
+        {date ? format(date, "PPP") + " " + time : <span>Pick date & time</span>}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 bg-white dark:bg-[#1a1a1a] border-black/10 dark:border-white/10">
         <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-black/10 dark:divide-white/10">
