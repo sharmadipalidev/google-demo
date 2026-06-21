@@ -91,9 +91,10 @@ export function DateTimePicker({
 
   return (
     <Popover>
-      <PopoverTrigger 
+      <PopoverTrigger
+        type="button"
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 px-3 py-2",
+          "inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-3 py-2",
           "w-full justify-start text-left font-normal bg-white dark:bg-zinc-900 border-black/10 dark:border-white/10 text-[#1a1a1a] dark:text-white hover:bg-black/5 dark:hover:bg-white/5",
           !date && "text-muted-foreground"
         )}

@@ -179,27 +179,30 @@ export default function GmailDashboard() {
 
   const messagesQuery = api.gmail.listMessages.useQuery(
     { maxResults: 10, q: searchQuery || defaultQuery || undefined, pageToken: pageTokens[currentPageIndex] || undefined },
-    { enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab), refetchInterval: 30000 },
+    { enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab), staleTime: 900000, refetchInterval: 30000 },
   );
 
   const labelsQuery = api.gmail.listLabels.useQuery(undefined, {
     enabled: hasGmail && activeTab === "labels",
+    staleTime: 900000,
   });
 
   const categoryCountsQuery = api.gmail.getCategoryCounts.useQuery(undefined, {
     enabled: hasGmail && activeTab === "inbox",
+    staleTime: 900000,
     refetchInterval: 5000,
   });
 
   
   const overviewStatsQuery = api.gmail.getOverviewStats.useQuery(undefined, {
     enabled: hasGmail && activeTab === "overview",
+    staleTime: 900000,
     refetchInterval: 10000,
   });
 
   const draftsQuery = api.gmail.listDrafts.useQuery(
     { maxResults: 15 },
-    { enabled: hasGmail && activeTab === "drafts" },
+    { enabled: hasGmail && activeTab === "drafts", staleTime: 900000 },
   );
 
   const disconnectPlugin = api.gmail.disconnectPlugin.useMutation({
@@ -287,6 +290,7 @@ export default function GmailDashboard() {
   );
 
   // ── Calendar Grid Logic
+  const getLocalDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const currentMonthName = monthNames[calMonth];
 
@@ -622,18 +626,23 @@ export default function GmailDashboard() {
           <section className="panel" id="panel-overview" style={{ padding: '32px', background: 'var(--bg-base)' }}>
             
             {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-display font-bold text-text-primary">
-                Welcome back {fullName?.split(' ')[0] || "Taylor"}
-              </h2>
-              <button 
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="w-10 h-10 rounded-full bg-bg-elevated border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors shadow-sm"
-              >
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
+            <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-base)', padding: '28px 32px 0 32px', margin: '-32px -32px 0 -32px' }}>
+              <div className="panel-header" style={{ marginBottom: '24px' }}>
+                <h2 className="panel-title">Welcome back {fullName?.split(' ')[0] || "Taylor"}</h2>
+                <div style={{ flex: 1 }} />
+                <button
+                  className="btn-refresh"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  title="Toggle Theme"
+                >
+                  {mounted && theme === 'dark' ? (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+                  )}
+                </button>
+              </div>
             </div>
-
             {/* Quick Stats Row */}
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-text-primary">Quick Stats</h3>
@@ -1383,12 +1392,12 @@ export default function GmailDashboard() {
                         <div key={`empty-${i}`} className="calendar-cell empty"></div>
                       ))}
                       {daysToRender.map((dateObj) => {
-                        const dateStr = dateObj.toISOString().split('T')[0];
+                        const dateStr = getLocalDateStr(dateObj);
                         const dayNum = dateObj.getDate();
-                        const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                        const isToday = getLocalDateStr(new Date()) === dateStr;
 
                         const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
-                          const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
+                          const evtStartStr = evt.start?.dateTime ? getLocalDateStr(new Date(evt.start.dateTime as string)) : evt.start?.date;
                           return evtStartStr === dateStr;
                         }) || [];
 
@@ -1423,9 +1432,9 @@ export default function GmailDashboard() {
                       <div className="time-grid-tz-spacer">GMT+00</div>
                       <div className="time-grid-day-headers">
                         {daysToRender.map((dateObj) => {
-                          const dateStr = dateObj.toISOString().split('T')[0];
+                          const dateStr = getLocalDateStr(dateObj);
                           const dayNum = dateObj.getDate();
-                          const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                          const isToday = getLocalDateStr(new Date()) === dateStr;
                           return (
                             <div key={dateStr} className={`time-grid-day-header ${isToday ? 'today' : ''}`}>
                               <span className="day-name">{["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dateObj.getDay()]}</span>
@@ -1446,13 +1455,13 @@ export default function GmailDashboard() {
                         </div>
                         <div className="time-grid-days">
                           {daysToRender.map((dateObj) => {
-                            const dateStr = dateObj.toISOString().split('T')[0];
+                            const dateStr = getLocalDateStr(dateObj);
                             const dayEvents = calendarQuery.data?.items?.filter((evt: any) => {
-                              const evtStartStr = evt.start?.dateTime ? new Date(evt.start.dateTime as string).toISOString().split('T')[0] : evt.start?.date;
+                              const evtStartStr = evt.start?.dateTime ? getLocalDateStr(new Date(evt.start.dateTime as string)) : evt.start?.date;
                               return evtStartStr === dateStr;
                             }) || [];
 
-                            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                            const isToday = getLocalDateStr(new Date()) === dateStr;
 
                             return (
                               <div key={dateStr} className="time-grid-day-column" onClick={() => openAddEvent(dateStr)}>
