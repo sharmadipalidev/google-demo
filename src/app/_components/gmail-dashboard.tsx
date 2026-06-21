@@ -149,6 +149,8 @@ export default function GmailDashboard() {
   const [composeTo, setComposeTo] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
+  const [replyBody, setReplyBody] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
 
   // ── Queries
   const defaultQuery = useMemo(() => {
@@ -197,7 +199,7 @@ export default function GmailDashboard() {
   });
 
   const draftsQuery = api.gmail.listDrafts.useQuery(
-    { maxResults: 15 },
+    { maxResults: 15, q: searchQuery || undefined },
     { enabled: hasGmail && activeTab === "drafts", staleTime: 900000 },
   );
 
@@ -832,7 +834,7 @@ export default function GmailDashboard() {
               {/* Left Column: Progress Rows */}
               <div className="col-span-1 lg:col-span-2">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold text-text-primary">System Quota</h3>
+                  <h3 className="text-xl font-semibold text-text-primary">System Storage & Usege</h3>
                 </div>
 
                 <div className="flex flex-col gap-4">
@@ -843,11 +845,7 @@ export default function GmailDashboard() {
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-black dark:text-white"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                       </div>
                       <div>
-                        <h4 className="text-[15px] font-semibold text-text-primary mb-1">Drive & Email Storage</h4>
-                        <div className="flex items-center gap-2">
-                          <img src={user?.image || "/logo.svg"} alt="Avatar" className="w-5 h-5 rounded-full object-cover" />
-                          <span className="text-xs text-text-secondary">{fullName || "User"}</span>
-                        </div>
+                        <h4 className="text-[15px] font-semibold text-text-primary">Drive & Email Storage</h4>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
@@ -900,11 +898,7 @@ export default function GmailDashboard() {
                         <Activity className="w-6 h-6 text-black dark:text-white" />
                       </div>
                       <div>
-                        <h4 className="text-[15px] font-semibold text-text-primary mb-1">AI Tokens Limit</h4>
-                        <div className="flex items-center gap-2">
-                          <img src={user?.image || "/logo.svg"} alt="Avatar" className="w-5 h-5 rounded-full object-cover" />
-                          <span className="text-xs text-text-secondary">{fullName || "User"}</span>
-                        </div>
+                        <h4 className="text-[15px] font-semibold text-text-primary">AI Tokens Limit</h4>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
@@ -977,7 +971,7 @@ export default function GmailDashboard() {
                   />
                 </div>
                 <button
-                  className="btn-icon"
+                  className="btn-refresh"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   title="Toggle Theme"
                 >
@@ -1040,123 +1034,180 @@ export default function GmailDashboard() {
             {messagesQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Fetching messages…</span></div>}
             {messagesQuery.error && <div className="error-state">⚠️ {messagesQuery.error.message}</div>}
 
-            {!selectedMessageId && messagesQuery.data?.pages && (
-              <ul className="message-list">
-                {messagesQuery.data.pages.flatMap(page => page.messages || []).map((msg) => {
-                  const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
-                  const initial = senderName.charAt(0).toUpperCase();
-                  const avatarColor = getAvatarColor(senderName);
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-180px)]">
+              {/* Left Pane: Message List */}
+              <div className={`flex-grow transition-all duration-300 ${selectedMessageId ? "hidden lg:block lg:w-1/2 border-r border-border pr-4 overflow-y-auto" : "w-full overflow-y-auto"}`}>
+                {messagesQuery.data?.pages && (
+                  <ul className="message-list">
+                    {messagesQuery.data.pages.flatMap(page => page.messages || []).map((msg) => {
+                      const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
+                      const initial = senderName.charAt(0).toUpperCase();
+                      const avatarColor = getAvatarColor(senderName);
 
-                  return (
-                    <li
-                      key={msg.id}
-                      className="message-row"
-                      onClick={() => setSelectedMessageId(msg.id!)}
-                      id={`msg-${msg.id}`}
-                    >
-                      <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
-                        {initial}
+                      return (
+                        <li
+                          key={msg.id}
+                          className={`message-row ${selectedMessageId === msg.id ? 'bg-black/5 dark:bg-white/5 border-l-4 border-l-text-primary' : ''}`}
+                          onClick={() => setSelectedMessageId(msg.id!)}
+                          id={`msg-${msg.id}`}
+                        >
+                          <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
+                            {initial}
+                          </div>
+                          <div className="msg-body">
+                            <div className="msg-top-line">
+                              <span className="msg-sender">
+                                {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
+                              </span>
+                              <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
+                            </div>
+                            <div className="msg-subject">
+                              {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
+                            </div>
+                            <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
+                          </div>
+                        </li>
+                      )
+                    })}
+                    {messagesQuery.hasNextPage && (
+                      <div
+                        ref={(node) => {
+                          if (!node) return;
+                          const observer = new IntersectionObserver(entries => {
+                            if (entries[0].isIntersecting && !messagesQuery.isFetchingNextPage) {
+                              messagesQuery.fetchNextPage();
+                            }
+                          }, { rootMargin: '100px' });
+                          observer.observe(node);
+                          return () => observer.disconnect();
+                        }}
+                        style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}
+                      >
+                        {messagesQuery.isFetchingNextPage ? 'Loading more...' : ''}
                       </div>
-                      <div className="msg-body">
-                        <div className="msg-top-line">
-                          <span className="msg-sender">
-                            {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
-                          </span>
-                          <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
-                        </div>
-                        <div className="msg-subject">
-                          {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
-                        </div>
-                        <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
-
-                      </div>
-                    </li>
-                  )
-                })}
-                {messagesQuery.hasNextPage && (
-                  <div
-                    ref={(node) => {
-                      if (!node) return;
-                      const observer = new IntersectionObserver(entries => {
-                        if (entries[0].isIntersecting && !messagesQuery.isFetchingNextPage) {
-                          messagesQuery.fetchNextPage();
-                        }
-                      }, { rootMargin: '100px' });
-                      observer.observe(node);
-                      return () => observer.disconnect();
-                    }}
-                    style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}
-                  >
-                    {messagesQuery.isFetchingNextPage ? 'Loading more...' : ''}
-                  </div>
+                    )}
+                  </ul>
                 )}
-              </ul>
-            )}
-
-            {selectedMessageId && selectedMessage.data && (
-              <div className="message-detail" id="message-detail-view">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <button className="btn-back" onClick={() => setSelectedMessageId(null)} style={{ margin: 0 }}>
-                    ← Back
-                  </button>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
-                      disabled={modifyMutation.isPending}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                    >
-                      <Star className="w-4 h-4" fill={selectedMessage.data?.labelIds?.includes('STARRED') ? "currentColor" : "none"} />
-                      {selectedMessage.data?.labelIds?.includes('STARRED') ? 'Unstar' : 'Star'}
-                    </button>
-                    <button
-                      onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
-                      disabled={modifyMutation.isPending}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                    >
-                      <ShieldAlert className="w-4 h-4" />
-                      Spam
-                    </button>
-                    <button
-                      onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
-                      disabled={modifyMutation.isPending}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#ef4444', transition: 'background 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Trash
-                    </button>
-                  </div>
-                </div>
-                <div className="detail-card">
-                  <h3 className="detail-subject">
-                    {extractHeader(selectedMessage.data.payload?.headers, "Subject") || "(No Subject)"}
-                  </h3>
-                  <div className="detail-meta">
-                    <span><strong>From:</strong> {extractHeader(selectedMessage.data.payload?.headers, "From")}</span>
-                    <span><strong>To:</strong> {extractHeader(selectedMessage.data.payload?.headers, "To")}</span>
-                    <span><strong>Date:</strong> {extractHeader(selectedMessage.data.payload?.headers, "Date")}</span>
-                  </div>
-                  <div className="detail-body">
-                    {(() => {
-                      const bodyData = getEmailBody(selectedMessage.data.payload);
-                      if (bodyData.html) {
-                        return <iframe srcDoc={bodyData.html} style={{ width: '100%', minHeight: '500px', border: 'none', background: '#fff', borderRadius: '8px' }} sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin" />;
-                      } else if (bodyData.text) {
-                        return <div style={{ whiteSpace: "pre-wrap" }}>{bodyData.text}</div>;
-                      } else {
-                        return <div>No body content available</div>;
-                      }
-                    })()}
-                  </div>
-
-                </div>
               </div>
-            )}
+
+              {/* Right Pane: Message Detail */}
+              {selectedMessageId && selectedMessage.data && (
+                <div className="w-full lg:w-1/2 h-full overflow-y-auto pl-2 pr-4 flex flex-col gap-4">
+                  <div className="message-detail" id="message-detail-view" style={{ flex: '1 0 auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <button className="btn-back lg:hidden" onClick={() => setSelectedMessageId(null)} style={{ margin: 0 }}>
+                        ← Back
+                      </button>
+                      <div className="hidden lg:block"></div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
+                          disabled={modifyMutation.isPending}
+                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                        >
+                          <Star className="w-4 h-4" fill={selectedMessage.data?.labelIds?.includes('STARRED') ? "currentColor" : "none"} />
+                          {selectedMessage.data?.labelIds?.includes('STARRED') ? 'Unstar' : 'Star'}
+                        </button>
+                        <button
+                          onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
+                          disabled={modifyMutation.isPending}
+                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                        >
+                          <ShieldAlert className="w-4 h-4" />
+                          Spam
+                        </button>
+                        <button
+                          onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
+                          disabled={modifyMutation.isPending}
+                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#ef4444', transition: 'background 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Trash
+                        </button>
+                      </div>
+                    </div>
+                    <div className="detail-card">
+                      <h3 className="detail-subject">
+                        {extractHeader(selectedMessage.data.payload?.headers, "Subject") || "(No Subject)"}
+                      </h3>
+                      <div className="detail-meta">
+                        <span><strong>From:</strong> {extractHeader(selectedMessage.data.payload?.headers, "From")}</span>
+                        <span><strong>To:</strong> {extractHeader(selectedMessage.data.payload?.headers, "To")}</span>
+                        <span><strong>Date:</strong> {extractHeader(selectedMessage.data.payload?.headers, "Date")}</span>
+                      </div>
+                      <div className="detail-body">
+                        {(() => {
+                          const bodyData = getEmailBody(selectedMessage.data.payload);
+                          if (bodyData.html) {
+                            return <iframe srcDoc={bodyData.html} style={{ width: '100%', minHeight: '500px', border: 'none', background: '#fff', borderRadius: '8px' }} sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin" />;
+                          } else if (bodyData.text) {
+                            return <div style={{ whiteSpace: "pre-wrap" }}>{bodyData.text}</div>;
+                          } else {
+                            return <div>No body content available</div>;
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reply Section */}
+                  <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border mt-2 flex flex-col gap-4">
+                    <h4 className="font-semibold text-text-primary text-[15px]">Reply</h4>
+                    <textarea 
+                      className="w-full bg-transparent border border-border rounded-xl p-3 text-[14px] text-text-primary focus:outline-none focus:border-text-primary/30 transition-colors"
+                      rows={4}
+                      placeholder="Type your reply here..."
+                      value={replyBody}
+                      onChange={(e) => setReplyBody(e.target.value)}
+                    />
+                    <div className="flex justify-end">
+                      <button 
+                        className="btn-primary"
+                        onClick={async () => {
+                          if (!replyBody.trim()) return;
+                          setIsReplying(true);
+                          const originalSubject = extractHeader(selectedMessage.data?.payload?.headers, "Subject") || "";
+                          const originalMessageId = extractHeader(selectedMessage.data?.payload?.headers, "Message-ID") || "";
+                          const originalFrom = extractHeader(selectedMessage.data?.payload?.headers, "From") || "";
+                          const threadId = selectedMessage.data?.threadId || "";
+                          
+                          const replySubject = originalSubject.startsWith("Re:") ? originalSubject : `Re: ${originalSubject}`;
+                          
+                          const match = originalFrom.match(/<(.+)>/);
+                          const toEmail = match ? match[1] : originalFrom;
+
+                          try {
+                            await sendMutation.mutateAsync({
+                              to: toEmail,
+                              subject: replySubject,
+                              body: replyBody,
+                              threadId: threadId,
+                              inReplyTo: originalMessageId,
+                              references: originalMessageId,
+                            });
+                            setReplyBody("");
+                            alert("Reply sent successfully!");
+                          } catch (error: any) {
+                            alert("Failed to send reply: " + error.message);
+                          } finally {
+                            setIsReplying(false);
+                          }
+                        }}
+                        disabled={isReplying || !replyBody.trim() || sendMutation.isPending}
+                      >
+                        {isReplying || sendMutation.isPending ? "Sending..." : "Send Reply"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {!messagesQuery.isLoading && !messagesQuery.error && (!messagesQuery.data?.pages || messagesQuery.data.pages[0]?.messages?.length === 0) && (
               <div className="empty-state">
@@ -1225,16 +1276,48 @@ export default function GmailDashboard() {
         {/* ── Drafts ───────────────────────────────── */}
         {activeTab === "drafts" && (
           <section className="panel" id="panel-drafts">
-            <div className="panel-header">
-              <h2 className="panel-title">Drafts</h2>
-              <button className="btn-refresh" onClick={() => draftsQuery.refetch()} id="btn-refresh-drafts">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                  <path d="M21 2v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 12a9 9 0 0115.36-6.36L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 22v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M21 12a9 9 0 01-15.36 6.36L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+            <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-deep)', padding: '28px 32px 0 32px', margin: '-28px -32px 0 -32px' }}>
+              <div className="panel-header" style={{ marginBottom: '24px' }}>
+                <h2 className="panel-title">Drafts</h2>
+                
+                <div className="search-bar">
+                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                    <path d="M16 16l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  <input
+                    id="search-input-drafts"
+                    type="text"
+                    placeholder="Search drafts…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") draftsQuery.refetch();
+                    }}
+                  />
+                </div>
+                
+                <button
+                  className="btn-refresh"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  title="Toggle Theme"
+                >
+                  {mounted && theme === 'dark' ? (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+                  )}
+                </button>
+
+                <button className="btn-refresh" onClick={() => draftsQuery.refetch()} id="btn-refresh-drafts" title="Refresh Drafts">
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                    <path d="M21 2v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 12a9 9 0 0115.36-6.36L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 22v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 12a9 9 0 01-15.36 6.36L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {draftsQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Loading drafts…</span></div>}
@@ -1405,7 +1488,7 @@ export default function GmailDashboard() {
                 />
               </div>
               <button
-                className="btn-icon"
+                className="btn-refresh"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 title="Toggle Theme"
               >

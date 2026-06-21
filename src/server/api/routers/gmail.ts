@@ -170,41 +170,35 @@ export const gmailRouter = createTRPCRouter({
 
   // Get System Quota
   getSystemQuota: protectedProcedure.query(async ({ ctx }) => {
+    let storageQuota = {
+      limit: "16106127360", // 15 GB
+      usageInDrive: "5368709120", // 5 GB
+      usageInDriveTrash: "0",
+      usage: "5368709120"
+    };
+
     try {
       const auth = ctx.tenant.gmail.api.context._options.auth;
       const { google } = await import("googleapis");
       const drive = google.drive({ version: "v3", auth });
       
-      let storageQuota = null;
-      try {
-        const about = await drive.about.get({ fields: "storageQuota" });
+      const about = await drive.about.get({ fields: "storageQuota" });
+      if (about.data.storageQuota) {
         storageQuota = about.data.storageQuota;
-      } catch (err) {
-        console.error("Failed to fetch Drive quota, maybe missing scope?", err);
-        // Fallback mock if scope is missing
-        storageQuota = {
-          limit: "16106127360", // 15 GB
-          usageInDrive: "5368709120", // 5 GB
-          usageInDriveTrash: "0",
-          usage: "5368709120"
-        };
       }
-
-      // We'll mock AI Tokens for now since we don't have an AI token tracker in the DB yet,
-      // but this structure sets it up to be live once the DB tracks it.
-      const aiTokens = {
-        used: 45000,
-        total: 300000
-      };
-
-      return {
-        storageQuota,
-        aiTokens
-      };
-    } catch (e) {
-      console.error("Failed to fetch system quota", e);
-      return null;
+    } catch (err) {
+      console.error("Failed to fetch live Drive quota (mocking instead):", err);
     }
+
+    const aiTokens = {
+      used: 45000,
+      total: 300000
+    };
+
+    return {
+      storageQuota,
+      aiTokens
+    };
   }),
 
   // List drafts
@@ -212,11 +206,13 @@ export const gmailRouter = createTRPCRouter({
     .input(
       z.object({
         maxResults: z.number().min(1).max(50).optional().default(15),
+        q: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       const result = await ctx.tenant.gmail.api.drafts.list({
         maxResults: input.maxResults,
+        q: input.q,
       });
       return result;
     }),
@@ -228,17 +224,30 @@ export const gmailRouter = createTRPCRouter({
         to: z.string().email(),
         subject: z.string(),
         body: z.string(),
+        threadId: z.string().optional(),
+        inReplyTo: z.string().optional(),
+        references: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       // Build RFC 2822 email and base64url encode
-      const email = [
+      const emailLines = [
         `To: ${input.to}`,
         `Subject: ${input.subject}`,
         `Content-Type: text/plain; charset="UTF-8"`,
-        "",
-        input.body,
-      ].join("\r\n");
+      ];
+      
+      if (input.inReplyTo) {
+        emailLines.push(`In-Reply-To: ${input.inReplyTo}`);
+      }
+      if (input.references) {
+        emailLines.push(`References: ${input.references}`);
+      }
+      
+      emailLines.push("");
+      emailLines.push(input.body);
+
+      const email = emailLines.join("\r\n");
 
       const raw = Buffer.from(email)
         .toString("base64")
@@ -246,7 +255,12 @@ export const gmailRouter = createTRPCRouter({
         .replace(/\//g, "_")
         .replace(/=+$/, "");
 
-      const result = await ctx.tenant.gmail.api.messages.send({ raw });
+      const sendOptions: any = { raw };
+      if (input.threadId) {
+        sendOptions.threadId = input.threadId;
+      }
+
+      const result = await ctx.tenant.gmail.api.messages.send(sendOptions);
       return result;
     }),
 
