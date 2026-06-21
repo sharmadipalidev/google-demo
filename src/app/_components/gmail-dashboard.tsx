@@ -1831,8 +1831,8 @@ export default function GmailDashboard() {
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 500, transition: 'all 0.2s' }}
                   className="hover:border-black/20 dark:hover:border-white/20 hover:shadow-sm"
                 >
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #EA4335 0%, #FBBC04 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Mail size={20} color="white" />
+                  <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-black/10 dark:group-hover:bg-white/10">
+                    <Mail className="w-5 h-5 text-[#1a1a1a] dark:text-white" />
                   </div>
                   Connect Gmail
                 </a>
@@ -1844,8 +1844,8 @@ export default function GmailDashboard() {
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 500, transition: 'all 0.2s' }}
                   className="hover:border-black/20 dark:hover:border-white/20 hover:shadow-sm"
                 >
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #4285F4 0%, #34A853 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <CalendarIcon size={20} color="white" />
+                  <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-black/10 dark:group-hover:bg-white/10">
+                    <CalendarIcon className="w-5 h-5 text-[#1a1a1a] dark:text-white" />
                   </div>
                   Connect Calendar
                 </a>
