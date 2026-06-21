@@ -397,7 +397,7 @@ export default function GmailDashboard() {
 
   const selectedMessage = api.gmail.getMessage.useQuery(
     { id: selectedMessageId! },
-    { enabled: !!selectedMessageId },
+    { enabled: !!selectedMessageId, staleTime: 5 * 60 * 1000 },
   );
 
   const sendMutation = api.gmail.sendEmail.useMutation({
@@ -1049,6 +1049,7 @@ export default function GmailDashboard() {
                           key={msg.id}
                           className={`message-row ${selectedMessageId === msg.id ? 'bg-black/5 dark:bg-white/5 border-l-4 border-l-text-primary' : ''}`}
                           onClick={() => setSelectedMessageId(msg.id!)}
+                          onMouseEnter={() => { if (msg.id) utils.gmail.getMessage.prefetch({ id: msg.id }); }}
                           id={`msg-${msg.id}`}
                         >
                           <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
