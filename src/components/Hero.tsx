@@ -39,7 +39,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="mt-8 relative flex items-center rounded-full border bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md px-2.5 py-1.5 shadow-sm border-black/5 dark:border-white/5 w-full max-w-[380px] transition-all duration-300"
+            className="mt-8 relative flex items-center rounded-full border bg-white dark:bg-zinc-900 px-2.5 py-1.5 shadow-sm border-black/5 dark:border-white/5 w-full max-w-[380px] transition-all duration-300"
           >
             <input
               placeholder="Type a command or ask a question..."
@@ -49,7 +49,7 @@ export default function Hero() {
             <div className="flex items-center gap-2 pr-1">
               <button 
                 onClick={() => signIn.social({ provider: 'google', callbackURL: '/gmail' })}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/60 dark:bg-white/60 backdrop-blur-md border border-white/20 dark:border-black/20 text-white dark:text-[#1a1a1a] transition-all hover:scale-105 shadow-sm hover:bg-black/80 dark:hover:bg-white/80"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5b5b5b] dark:bg-[#7a7a7a] text-white transition-all hover:scale-105 shadow-sm hover:bg-[#4a4a4a] dark:hover:bg-[#8a8a8a]"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
