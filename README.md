@@ -1,4 +1,4 @@
-#  Neurosync AI Workspace
+# 🧠 Neurosync AI Workspace
 
 > Your personal AI operator, seamlessly integrated into your daily workflow.
 
@@ -7,21 +7,21 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 
-Neurosync is an AI-powered workspace that acts as your personal assistant. It deeply integrates into your workflow to manage your Gmail, schedule Google Meet events, and automate busywork using a conversational AI agent. Built on the modern T3 Stack, it securely connects to Google APIs via **Corsair**.
+Neurosync is a next-generation AI-powered workspace that acts as your personal operational assistant. It deeply integrates into your daily workflow to manage your Gmail, schedule Google Calendar events, and automate busywork using a conversational AI agent. Built on the modern T3 Stack, it securely connects to Google APIs via **Corsair**.
 
 ---
 
-##  Key Features
+## ✨ Key Features
 
--  **AI-Powered Inbox Management**: Chat with an intelligent AI agent that can summarize complex email threads, draft thoughtful replies, and instantly organize your inbox.
--  **Automated Scheduling**: Ask the agent to schedule Google Calendar events, check your availability, and set up meetings directly from your chat.
-- **Seamless Google Integration**: Native, secure integrations with Gmail and Google Calendar powered by the robust `@corsair-dev` plugin ecosystem.
--  **Custom Onboarding Flow**: Fast and secure OAuth 2.0 connection flows for users to seamlessly link their Google Workspace.
--  **Modern Dashboard Aesthetic**: Premium, glassmorphism UI with smooth micro-animations built using Tailwind CSS and Framer Motion for a stunning user experience.
+- 🤖 **AI-Powered Inbox Management**: Chat with an intelligent AI agent that can summarize complex email threads, draft thoughtful replies, and instantly organize your inbox.
+- 📅 **Automated Scheduling**: Ask the agent to schedule Google Calendar events, check your availability, and set up meetings directly from your chat.
+- 🔗 **Seamless Google Integration**: Native, secure integrations with Gmail and Google Calendar powered by the robust `@corsair-dev` plugin ecosystem.
+- 🔐 **Custom Onboarding Flow**: Fast and secure OAuth 2.0 connection flows for users to seamlessly link their Google Workspace.
+- 🎨 **Modern Dashboard Aesthetic**: Premium, glassmorphism UI with smooth micro-animations built using Tailwind CSS and Framer Motion for a stunning user experience.
 
 ---
 
-## Application Architecture & Flow
+## 🏗 Application Architecture & Flow
 
 1. **Authentication**: Users sign up or log in securely using **Clerk**.
 2. **Onboarding**: New users are automatically redirected to `/onboarding` to effortlessly connect their Gmail or Google Calendar accounts.
@@ -31,7 +31,7 @@ Neurosync is an AI-powered workspace that acts as your personal assistant. It de
 
 ---
 
-## File Structure
+## 📂 File Structure
 
 ```text
 neurosync/
@@ -61,7 +61,7 @@ neurosync/
 
 ---
 
-##  Database Diagram
+## 🗄 Database Diagram
 
 Neurosync uses a robust PostgreSQL database managed by **Drizzle ORM**. The core tables handle Corsair's OAuth integration accounts, synchronized entities (emails, calendars), and real-time webhook events.
 
@@ -114,7 +114,7 @@ erDiagram
 
 ---
 
-##  Tech Stack
+## 💻 Tech Stack
 
 - **Framework**: Next.js 15+ (App Router)
 - **Styling**: Tailwind CSS & Framer Motion
@@ -126,7 +126,7 @@ erDiagram
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### 1. Environment Variables
 

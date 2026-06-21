@@ -952,7 +952,7 @@ export default function GmailDashboard() {
         {["inbox", "starred", "sent", "spam", "trash"].includes(activeTab) && (
           <section className="panel" id={`panel-${activeTab}`}>
             <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-deep)', padding: '28px 32px 0 32px', margin: '-28px -32px 0 -32px' }}>
-              <div className="panel-header" style={{ marginBottom: activeTab === "inbox" && !selectedMessageId ? '0' : '24px' }}>
+              <div className="panel-header" style={{ marginBottom: activeTab === "inbox" ? '0' : '24px' }}>
                 <h2 className="panel-title">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
                 <div className="search-bar">
                   <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
