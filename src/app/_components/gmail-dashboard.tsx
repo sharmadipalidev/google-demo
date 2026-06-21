@@ -709,6 +709,28 @@ export default function GmailDashboard() {
                     calendarQuery.data.items.slice(0, 4).map((event: any, i: number) => {
                       const colors = ['bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-black dark:text-white'];
                       const c = colors[0];
+                      
+                      const start = event.start?.dateTime || event.start?.date;
+                      const end = event.end?.dateTime || event.end?.date;
+                      let dateStr = "";
+                      let colorClass = "text-text-secondary";
+
+                      if (start) {
+                        const startDate = new Date(start);
+                        const endDate = end ? new Date(end) : new Date(startDate.getTime() + 60*60*1000);
+                        const now = new Date();
+
+                        dateStr = formatExactDate(startDate);
+
+                        if (now > endDate) {
+                          colorClass = "text-red-500";
+                        } else if (now >= startDate && now <= endDate) {
+                          colorClass = "text-green-500";
+                        } else {
+                          colorClass = "text-text-secondary";
+                        }
+                      }
+
                       return (
                         <div key={i} className="flex items-center gap-4 group cursor-pointer p-1">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${c}`}>
@@ -718,6 +740,11 @@ export default function GmailDashboard() {
                             <h4 className="text-sm font-semibold text-text-primary truncate">{event.summary || "Busy"}</h4>
                             <p className="text-xs text-text-secondary truncate mt-0.5">Event - Google Calendar</p>
                           </div>
+                          {dateStr && (
+                            <div className={`text-xs font-medium whitespace-nowrap ${colorClass}`}>
+                              {dateStr}
+                            </div>
+                          )}
                         </div>
                       )
                     })
@@ -1595,8 +1622,8 @@ export default function GmailDashboard() {
                   {/* Gmail */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #EA4335 0%, #FBBC04 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                      <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-5 h-5 text-black dark:text-white" />
                       </div>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Gmail</div>
@@ -1618,8 +1645,8 @@ export default function GmailDashboard() {
                   {/* Google Calendar */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #4285F4 0%, #34A853 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                        <CalendarIcon className="w-5 h-5 text-black dark:text-white" />
                       </div>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Google Calendar</div>
