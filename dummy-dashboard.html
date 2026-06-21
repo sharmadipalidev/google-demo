@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dummy Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Light theme */
+            --bg-deep: #ffffff;
+            --bg-surface: #f4f5f7;
+            --bg-card: #ffffff;
+            --bg-card-hover: #fafafa;
+            --bg-elevated: #ffffff;
+            --bg-base: #ffffff;
+
+            --border: rgba(0, 0, 0, 0.06);
+            --border-focus: rgba(0, 0, 0, 0.15);
+            --border-subtle: rgba(0, 0, 0, 0.03);
+
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+
+            --accent: #111827;
+            --accent-hover: #000000;
+            --accent-glow: rgba(0, 0, 0, 0.05);
+            --accent-soft: #ffffff;
+
+            --radius-md: 10px;
+            --radius-lg: 14px;
+
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark {
+            --bg-deep: #0a0a0a;
+            --bg-surface: #111111;
+            --bg-card: #171717;
+            --bg-card-hover: #1e1e1e;
+            --bg-elevated: #222222;
+            --bg-base: #0a0a0a;
+
+            --border: rgba(255, 255, 255, 0.06);
+            --border-focus: rgba(163, 230, 53, 0.5);
+            --border-subtle: rgba(255, 255, 255, 0.03);
+
+            --text-primary: #f0f0f0;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+
+            --accent: #84cc16;
+            --accent-hover: #a3e635;
+            --accent-glow: rgba(255, 255, 255, 0.15);
+            --accent-soft: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+            gap: 20px;
+            flex-shrink: 0;
+            overflow: hidden;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            background: var(--bg-base);
+            padding: 32px;
+            transition: background-color 0.3s;
+        }
+
+        .message-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .message-row:hover {
+            border-color: var(--border-focus);
+            background: var(--bg-card-hover);
+        }
+
+        .msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .msg-body {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .msg-top-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .msg-sender {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .msg-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .msg-subject {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .msg-snippet {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Nav Tab */
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .dark .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .cat-btn {
+            padding: 12px 8px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .cat-btn.active {
+            border-bottom-color: var(--text-primary);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 10px 16px;
+            flex-grow: 1;
+            max-width: 600px;
+        }
+        
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            color: var(--text-primary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="">
+
+    <aside class="sidebar">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 6px 8px;">
+            <div style="width: 24px; height: 24px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-primary"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+            </div>
+            <h1 style="font-size: 16px; font-weight: 600; color: var(--text-primary);">neurosync</h1>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+            <button style="background: #ffffff; color: #1a1a1a; border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 15px; cursor: pointer; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Compose
+            </button>
+        </div>
+
+        <nav style="display: flex; flex-direction: column; gap: 4px;">
+            <button class="nav-btn active" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span style="flex: 1;">Inbox</span>
+                <span style="background: #e5e5e5; color: #1a1a1a; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px;">28</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span style="flex: 1;">Starred</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <span style="flex: 1;">Sent</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span style="flex: 1;">Drafts</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span style="flex: 1;">Spam</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span style="flex: 1;">Trash</span>
+            </button>
+            
+            <div style="height: 1px; background: var(--border); margin: 12px 0;"></div>
+            
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span style="flex: 1;">Calendar</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+                <span style="flex: 1;">AI Agent</span>
+            </button>
+            <button class="nav-btn" onclick="activateNav(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span style="flex: 1;">Settings</span>
+            </button>
+        </nav>
+
+        <div style="margin-top: auto; padding-top: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+                <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden;">
+                    <!-- Placeholder avatar for Dipali -->
+                    <img src="https://ui-avatars.com/api/?name=Dipali&background=0D8ABC&color=fff" alt="Dipali" style="width: 100%; height: 100%;">
+                </div>
+                <span style="font-size: 14px; font-weight: 500; color: var(--text-primary);">Dipali</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div style="position: sticky; top: -32px; z-index: 10; background: var(--bg-deep); margin: -32px -32px 0 -32px; padding: 32px 32px 0 32px;">
+            <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
+                <h2 style="font-size: 24px; font-weight: 700;">Inbox</h2>
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="color: var(--text-secondary);">
+                        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                        <path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" placeholder="Search emails...">
+                </div>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button style="width: 36px; height: 36px; border-radius: 50%; background: transparent; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer;">
+                        &lt;
+                    </button>
+                    <button style="width: 36px; height: 36px; border-radius: 50%; background: transparent; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer;">
+                        &gt;
+                    </button>
+                    <button onclick="toggleTheme()" style="width: 36px; height: 36px; border-radius: 50%; background: transparent; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; margin-left: 16px;">
+                        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; border-bottom: 1px solid var(--border); gap: 24px;">
+                <button class="cat-btn active" onclick="activateCat(this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Primary
+                    <span style="background: var(--text-primary); color: var(--bg-deep); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 12px; margin-left: 4px;">33 new</span>
+                </button>
+                <button class="cat-btn" onclick="activateCat(this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                    Promotions
+                    <span style="background: var(--bg-elevated); color: var(--text-secondary); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 12px; margin-left: 4px;">6 new</span>
+                </button>
+                <button class="cat-btn" onclick="activateCat(this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Social
+                    <span style="background: var(--bg-elevated); color: var(--text-secondary); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 12px; margin-left: 4px;">21 new</span>
+                </button>
+                <button class="cat-btn" onclick="activateCat(this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    Updates
+                    <span style="background: var(--bg-elevated); color: var(--text-secondary); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 12px; margin-left: 4px;">56 new</span>
+                </button>
+            </div>
+        </div>
+
+        <div style="margin-top: 24px; padding-bottom: 32px;">
+            <ul class="message-list">
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #f59e0b;">G</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">Google</span>
+                            <span class="msg-time">Jun 18, 2:02 PM</span>
+                        </div>
+                        <div class="msg-subject">You shared some Google Account data with Clerk</div>
+                        <p class="msg-snippet">Keep track of your Google Account data sharmadipali2000@gmail.com You're receiving this email because you used Sign in with Google to sign in to Clerk on June 18 at 1:58 P...</p>
+                    </div>
+                </li>
+                
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #ea580c;">V</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">Vercel</span>
+                            <span class="msg-time">Jun 18, 1:58 PM</span>
+                        </div>
+                        <div class="msg-subject">Failed production deployment on team 'Dipali Sharma's projects'</div>
+                        <p class="msg-snippet">Hello, sharmadipali2000-4434. There was an error deploying google-demo to the production environment. See deployment details If you'd like to report an issue, reach out to ...</p>
+                    </div>
+                </li>
+
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #ea580c;">V</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">Vercel</span>
+                            <span class="msg-time">Jun 18, 1:39 PM</span>
+                        </div>
+                        <div class="msg-subject">Failed production deployment on team 'Dipali Sharma's projects'</div>
+                        <p class="msg-snippet">Hello, sharmadipali2000-4434. There was an error deploying google-demo to the production environment. See deployment details If you'd like to report an issue, reach out to ...</p>
+                    </div>
+                </li>
+
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #f59e0b;">L</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">LinkedIn Job Recommendations</span>
+                            <span class="msg-time">Jun 18, 1:36 PM</span>
+                        </div>
+                        <div class="msg-subject">Termgrid is hiring a Frontend Developer - Remote</div>
+                        <p class="msg-snippet">Discover roles that match your interests</p>
+                    </div>
+                </li>
+
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #ea580c;">V</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">Vercel</span>
+                            <span class="msg-time">Jun 18, 1:33 PM</span>
+                        </div>
+                        <div class="msg-subject">Failed production deployments on team 'Dipali Sharma's projects'</div>
+                        <p class="msg-snippet">Hello, sharmadipali2000-4434. There was an error deploying google-demo to the production environment. See deployment details If you'd like to report an issue, reach out to ...</p>
+                    </div>
+                </li>
+
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #10b981;">U</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">Udemy</span>
+                            <span class="msg-time">Jun 18, 12:17 PM</span>
+                        </div>
+                        <div class="msg-subject">AI is getting smarter. It's also getting better at being wrong</div>
+                        <p class="msg-snippet">AI hallucinations, a free productivity guide, and lessons from McLaren Racing, inside</p>
+                    </div>
+                </li>
+
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #06b6d4;">L</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">LinkedIn Job Alerts</span>
+                            <span class="msg-time">Jun 18, 9:37 AM</span>
+                        </div>
+                        <div class="msg-subject">Front-End Developer Intern (JavaScript, React) at Skillfied Mentor Jobs</div>
+                        <p class="msg-snippet">Dipali, apply today</p>
+                    </div>
+                </li>
+                
+                <li class="message-row">
+                    <div class="msg-avatar" style="background-color: #ea580c;">V</div>
+                    <div class="msg-body">
+                        <div class="msg-top-line">
+                            <span class="msg-sender">Vercel</span>
+                            <span class="msg-time">Jun 18, 4:36 AM</span>
+                        </div>
+                        <div class="msg-subject">Failed production deployment on team 'Dipali Sharma's projects'</div>
+                        <p class="msg-snippet">Hello, sharmadipali2000-4434. There was an error deploying google-demo to the production environment.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+        }
+
+        function activateNav(el) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function activateCat(el) {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('active');
+                let badge = btn.querySelector('span');
+                if(badge) {
+                    badge.style.background = 'var(--bg-elevated)';
+                    badge.style.color = 'var(--text-secondary)';
+                }
+            });
+            el.classList.add('active');
+            let badge = el.querySelector('span');
+            if(badge) {
+                badge.style.background = 'var(--text-primary)';
+                badge.style.color = 'var(--bg-deep)';
+            }
+        }
+    </script>
+</body>
+</html>
