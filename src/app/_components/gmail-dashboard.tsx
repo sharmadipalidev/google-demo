@@ -983,7 +983,7 @@ export default function GmailDashboard() {
                 </button>
               </div>
 
-              {activeTab === "inbox" && !selectedMessageId && (
+              {activeTab === "inbox" && (
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', paddingTop: '16px', gap: '24px' }}>
                   {[
                     { id: "primary", label: "Primary", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, labelId: "CATEGORY_PERSONAL" },
@@ -1034,7 +1034,7 @@ export default function GmailDashboard() {
             {messagesQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Fetching messages…</span></div>}
             {messagesQuery.error && <div className="error-state">⚠️ {messagesQuery.error.message}</div>}
 
-            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-180px)]">
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)] -mt-2">
               {/* Left Pane: Message List */}
               <div className={`flex-grow transition-all duration-300 ${selectedMessageId ? "hidden lg:block lg:w-1/2 border-r border-border pr-4 overflow-y-auto" : "w-full overflow-y-auto"}`}>
                 {messagesQuery.data?.pages && (
@@ -1093,8 +1093,8 @@ export default function GmailDashboard() {
               {/* Right Pane: Message Detail */}
               {selectedMessageId && selectedMessage.data && (
                 <div className="w-full lg:w-1/2 h-full overflow-y-auto pl-2 pr-4 flex flex-col gap-4">
-                  <div className="message-detail" id="message-detail-view" style={{ flex: '1 0 auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div className="message-detail" id="message-detail-view">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '16px' }}>
                       <button className="btn-back lg:hidden" onClick={() => setSelectedMessageId(null)} style={{ margin: 0 }}>
                         ← Back
                       </button>
