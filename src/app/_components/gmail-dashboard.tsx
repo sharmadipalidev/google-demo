@@ -995,7 +995,7 @@ export default function GmailDashboard() {
                     return (
                       <button
                         key={cat.id}
-                        onClick={() => setInboxCategory(cat.id as any)}
+                        onClick={() => { setInboxCategory(cat.id as any); setSelectedMessageId(null); }}
                         style={{
                           padding: '12px 8px',
                           background: 'none',
@@ -1036,7 +1036,7 @@ export default function GmailDashboard() {
 
             <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)] -mt-2">
               {/* Left Pane: Message List */}
-              <div className={`flex-grow transition-all duration-300 ${selectedMessageId ? "hidden lg:block lg:w-1/2 border-r border-border pr-4 overflow-y-auto" : "w-full overflow-y-auto"}`}>
+              <div className={`flex-grow ${selectedMessageId ? "hidden lg:block lg:w-1/2 border-r border-border pr-4 overflow-y-auto" : "w-full overflow-y-auto"}`}>
                 {messagesQuery.data?.pages && (
                   <ul className="message-list">
                     {messagesQuery.data.pages.flatMap(page => page.messages || []).map((msg) => {

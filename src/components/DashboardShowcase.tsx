@@ -14,12 +14,14 @@ export default function DashboardShowcase() {
         className="relative z-10 w-full max-w-6xl mx-auto rounded-xl shadow-2xl border border-black/10 overflow-hidden bg-white/50 backdrop-blur-xl"
       >
         <Image
-          src="/Screenshot 2026-06-18 174015.png"
+          src="/Screenshot 2026-06-21 222038.png"
           alt="Neurosync Dashboard Interface"
           width={1920}
           height={1080}
           className="w-full h-auto object-cover"
           priority
+          unoptimized
+          quality={100}
         />
       </motion.div>
     </section>
