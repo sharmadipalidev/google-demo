@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
 import { authClient, useSession, signOut } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
-import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2, Grip, Sun, Moon } from "lucide-react";
+import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2, Grip, Sun, Moon, Inbox } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -284,6 +284,10 @@ export default function GmailDashboard() {
     { maxResults: 100, q: searchQuery || undefined, timeMin, timeMax },
     { enabled: hasCalendar && (activeTab === "calendar" || activeTab === "overview"), refetchInterval: 30000 },
   );
+
+  const systemQuotaQuery = api.gmail.getSystemQuota.useQuery(undefined, {
+    refetchInterval: 60000,
+  });
 
   // ── Calendar Grid Logic
   const getLocalDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -644,9 +648,12 @@ export default function GmailDashboard() {
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 items-start">
               {/* Inbox Card */}
-              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+              <div 
+                className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
+                onClick={() => { setActiveTab('inbox'); setSelectedMessageId(null); }}
+              >
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors">
                     <Mail className="w-5 h-5 text-black dark:text-white" />
                   </div>
                   <div>
@@ -654,13 +661,15 @@ export default function GmailDashboard() {
                     <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.inbox?.total.toLocaleString() || "0"} Emails</p>
                   </div>
                 </div>
-
               </div>
 
               {/* Sent Card */}
-              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+              <div 
+                className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
+                onClick={() => { setActiveTab('sent'); setSelectedMessageId(null); }}
+              >
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors">
                     <Send className="w-5 h-5 text-black dark:text-white" />
                   </div>
                   <div>
@@ -668,13 +677,15 @@ export default function GmailDashboard() {
                     <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.sent?.total.toLocaleString() || "0"} Emails</p>
                   </div>
                 </div>
-
               </div>
 
               {/* Drafts Card */}
-              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+              <div 
+                className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
+                onClick={() => { setActiveTab('drafts'); setSelectedMessageId(null); }}
+              >
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors">
                     <FileEdit className="w-5 h-5 text-black dark:text-white" />
                   </div>
                   <div>
@@ -682,13 +693,15 @@ export default function GmailDashboard() {
                     <p className="text-[13px] text-text-secondary">{overviewStatsQuery.data?.drafts?.total.toLocaleString() || "0"} Saved</p>
                   </div>
                 </div>
-
               </div>
 
               {/* Starred Card */}
-              <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between">
+              <div 
+                className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
+                onClick={() => { setActiveTab('starred'); setSelectedMessageId(null); }}
+              >
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors">
                     <Star className="w-5 h-5 text-black dark:text-white" />
                   </div>
                   <div>
@@ -698,7 +711,6 @@ export default function GmailDashboard() {
                 </div>
               </div>
             </div>
-
             {/* Middle Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               
@@ -708,36 +720,46 @@ export default function GmailDashboard() {
                 <EmailActivityChart />
               </div>
 
-              {/* Daily Schedule */}
+              {/* Daily Events */}
               <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col">
-                <h3 className="text-lg font-semibold text-text-primary mb-6">Daily Schedule</h3>
-                <div className="space-y-4 flex-1">
-                  {calendarQuery.data?.items ? (
-                    calendarQuery.data.items.slice(0, 4).map((event: any, i: number) => {
+                <h3 className="text-lg font-semibold text-text-primary mb-6">Daily Events</h3>
+                <div className="space-y-4 flex-1 overflow-y-auto pr-2 min-h-0" style={{ maxHeight: '350px' }}>
+                  {(() => {
+                    if (!calendarQuery.data?.items) {
+                      return <div className="text-sm text-text-secondary text-center py-4">Loading agenda...</div>;
+                    }
+                    
+                    const now = new Date();
+                    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    
+                    const events = calendarQuery.data.items.filter((event: any) => {
+                      const start = event.start?.dateTime || event.start?.date;
+                      if (!start) return false;
+                      const startDate = new Date(start);
+                      const isToday = startDate.getDate() === now.getDate() && startDate.getMonth() === now.getMonth() && startDate.getFullYear() === now.getFullYear();
+                      const isUpcoming = startDate > now && startDate <= nextWeek;
+                      return isToday || isUpcoming;
+                    }).sort((a: any, b: any) => {
+                      const dA = new Date(a.start?.dateTime || a.start?.date).getTime();
+                      const dB = new Date(b.start?.dateTime || b.start?.date).getTime();
+                      return dA - dB;
+                    });
+
+                    if (events.length === 0) {
+                      return <div className="text-sm text-text-secondary py-4 text-center">No upcoming events this week.</div>;
+                    }
+
+                    return events.map((event: any, i: number) => {
                       const colors = ['bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-black dark:text-white'];
                       const c = colors[0];
                       
                       const start = event.start?.dateTime || event.start?.date;
-                      const end = event.end?.dateTime || event.end?.date;
-                      let dateStr = "";
-                      let colorClass = "text-text-secondary";
-
-                      if (start) {
-                        const startDate = new Date(start);
-                        const endDate = end ? new Date(end) : new Date(startDate.getTime() + 60*60*1000);
-                        const now = new Date();
-
-                        dateStr = formatExactDate(startDate);
-
-                        if (now > endDate) {
-                          colorClass = "text-red-500";
-                        } else if (now >= startDate && now <= endDate) {
-                          colorClass = "text-green-500";
-                        } else {
-                          colorClass = "text-text-secondary";
-                        }
-                      }
-
+                      const startDate = new Date(start);
+                      const isToday = startDate.getDate() === now.getDate() && startDate.getMonth() === now.getMonth() && startDate.getFullYear() === now.getFullYear();
+                      
+                      const dateStr = formatExactDate(startDate);
+                      const colorClass = isToday ? "text-emerald-600 dark:text-[#86efac]" : "text-purple-600 dark:text-[#d8b4fe]";
+                      
                       return (
                         <div key={i} className="flex items-center gap-4 group cursor-pointer p-1">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${c}`}>
@@ -748,19 +770,17 @@ export default function GmailDashboard() {
                             <p className="text-xs text-text-secondary truncate mt-0.5">Event - Google Calendar</p>
                           </div>
                           {dateStr && (
-                            <div className={`text-xs font-medium whitespace-nowrap ${colorClass}`}>
-                              {dateStr}
+                            <div className="flex flex-col items-end gap-1">
+                              {isToday && <span className="bg-emerald-500/10 text-emerald-600 dark:bg-[#86efac]/10 dark:text-[#86efac] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Today</span>}
+                              <div className={`text-xs font-medium whitespace-nowrap ${colorClass}`}>
+                                {dateStr}
+                              </div>
                             </div>
                           )}
                         </div>
                       )
-                    })
-                  ) : (
-                    <div className="text-sm text-text-secondary text-center py-4">Loading agenda...</div>
-                  )}
-                  {calendarQuery.data?.items && calendarQuery.data.items.length === 0 && (
-                    <div className="text-sm text-text-secondary py-4 text-center">No upcoming events today.</div>
-                  )}
+                    });
+                  })()}
                 </div>
               </div>
 
@@ -833,15 +853,41 @@ export default function GmailDashboard() {
                     <div className="flex items-center gap-8">
                       <div className="text-right hidden sm:block">
                         <p className="text-xs text-text-secondary mb-1">Remaining</p>
-                        <p className="text-sm font-semibold text-text-primary">10.8 GB</p>
+                        <p className="text-sm font-semibold text-text-primary">
+                          {systemQuotaQuery.data?.storageQuota ? (
+                            (() => {
+                              const usage = parseInt(systemQuotaQuery.data.storageQuota.usage || "0", 10);
+                              const limit = parseInt(systemQuotaQuery.data.storageQuota.limit || "1", 10);
+                              const remaining = Math.max(0, limit - usage);
+                              return (remaining / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+                            })()
+                          ) : "..."}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 relative flex items-center justify-center">
                           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
                             <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
-                            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" strokeDashoffset="85" className="text-text-primary" strokeLinecap="round" />
+                            {systemQuotaQuery.data?.storageQuota && (
+                              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" 
+                                strokeDashoffset={(() => {
+                                  const usage = parseInt(systemQuotaQuery.data.storageQuota.usage || "0", 10);
+                                  const limit = parseInt(systemQuotaQuery.data.storageQuota.limit || "1", 10);
+                                  const pct = usage / limit;
+                                  return 125 - (125 * pct);
+                                })()} 
+                                className="text-text-primary transition-all duration-1000" strokeLinecap="round" />
+                            )}
                           </svg>
-                          <span className="text-[11px] font-semibold text-text-primary relative z-10">28%</span>
+                          <span className="text-[11px] font-semibold text-text-primary relative z-10">
+                            {systemQuotaQuery.data?.storageQuota ? (
+                              (() => {
+                                const usage = parseInt(systemQuotaQuery.data.storageQuota.usage || "0", 10);
+                                const limit = parseInt(systemQuotaQuery.data.storageQuota.limit || "1", 10);
+                                return Math.round((usage / limit) * 100) + "%";
+                              })()
+                            ) : "..."}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -864,15 +910,35 @@ export default function GmailDashboard() {
                     <div className="flex items-center gap-8">
                       <div className="text-right hidden sm:block">
                         <p className="text-xs text-text-secondary mb-1">Remaining</p>
-                        <p className="text-sm font-semibold text-text-primary">255k</p>
+                        <p className="text-sm font-semibold text-text-primary">
+                          {systemQuotaQuery.data?.aiTokens ? (
+                            (() => {
+                              const used = systemQuotaQuery.data.aiTokens.used;
+                              const total = systemQuotaQuery.data.aiTokens.total;
+                              const remaining = Math.max(0, total - used);
+                              return (remaining >= 1000 ? (remaining / 1000).toFixed(0) + "k" : remaining);
+                            })()
+                          ) : "..."}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 relative flex items-center justify-center">
                           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
                             <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
-                            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" strokeDashoffset="65" className="text-text-primary" strokeLinecap="round" />
+                            {systemQuotaQuery.data?.aiTokens && (
+                              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" 
+                                strokeDashoffset={(() => {
+                                  const pct = systemQuotaQuery.data.aiTokens.used / systemQuotaQuery.data.aiTokens.total;
+                                  return 125 - (125 * pct);
+                                })()} 
+                                className="text-text-primary transition-all duration-1000" strokeLinecap="round" />
+                            )}
                           </svg>
-                          <span className="text-[11px] font-semibold text-text-primary relative z-10">49%</span>
+                          <span className="text-[11px] font-semibold text-text-primary relative z-10">
+                            {systemQuotaQuery.data?.aiTokens ? (
+                              Math.round((systemQuotaQuery.data.aiTokens.used / systemQuotaQuery.data.aiTokens.total) * 100) + "%"
+                            ) : "..."}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1094,7 +1160,7 @@ export default function GmailDashboard() {
 
             {!messagesQuery.isLoading && !messagesQuery.error && (!messagesQuery.data?.pages || messagesQuery.data.pages[0]?.messages?.length === 0) && (
               <div className="empty-state">
-                <span className="empty-icon">📭</span>
+                <Inbox size={48} className="empty-icon" style={{ strokeWidth: 1.5, color: 'var(--text-secondary)' }} />
                 <p>No messages found</p>
               </div>
             )}
