@@ -14,13 +14,30 @@ declare global {
   }
 }
 
-export function AssistantPanel() {
+export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("assistant_chat_history");
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse assistant chat history", e);
+      }
+    }
+  }, []);
+
+  // Save history to localStorage whenever messages change
+  useEffect(() => {
+    localStorage.setItem("assistant_chat_history", JSON.stringify(messages));
+  }, [messages]);
 
   const runPrompt = api.assistant.runPrompt.useMutation({
     onSuccess: (data) => {
@@ -135,8 +152,8 @@ export function AssistantPanel() {
             </div>
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${msg.role === 'assistant' ? 'bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green dark:text-white' : 'bg-gray-100 dark:bg-zinc-800/50 text-[#1a1a1a] dark:text-white'}`}>
-                  {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <div className="text-sm font-semibold">U</div>}
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${msg.role === 'assistant' ? 'bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-sm text-[#1a1a1a] dark:text-white' : 'bg-gray-100 dark:bg-zinc-800/50 text-[#1a1a1a] dark:text-white'}`}>
+                  {msg.role === 'assistant' ? <img src="/logo.svg" alt="Agent" className="w-5 h-5 dark:invert" /> : <div className="text-sm font-semibold">{userInitial}</div>}
                 </div>
                 <div className="flex flex-col group max-w-[85%]">
                   <div className={`mt-1 rounded-2xl border border-black/5 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-4 text-sm leading-relaxed whitespace-pre-wrap text-[#1a1a1a] dark:text-zinc-300 shadow-sm transition-colors ${msg.role === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
@@ -156,8 +173,8 @@ export function AssistantPanel() {
             
             {runPrompt.isPending && (
               <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1a1a1a] dark:bg-zinc-800 text-brand-green dark:text-white transition-colors">
-                  <Bot className="w-5 h-5" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-sm text-[#1a1a1a] dark:text-white transition-colors">
+                  <img src="/logo.svg" alt="Agent" className="w-5 h-5 dark:invert" />
                 </div>
                 <div className="mt-1 rounded-2xl rounded-tl-none border border-black/5 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-5 flex items-center gap-2 h-[42px]">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a] dark:bg-white opacity-50 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -205,7 +222,7 @@ export function AssistantPanel() {
             e.preventDefault();
             if (canSubmit && !runPrompt.isPending) {
               setMessages(prev => [...prev, { role: "user", content: prompt }]);
-              runPrompt.mutate({ prompt });
+              runPrompt.mutate({ prompt, history: messages });
               setPrompt("");
             }
           }}

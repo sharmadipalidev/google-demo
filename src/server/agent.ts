@@ -92,7 +92,7 @@ function createAssistantAgent(tenant: CorsairTenant) {
     });
 }
 
-export async function runAssistantPrompt(prompt: string, tenant: CorsairTenant) {
+export async function runAssistantPrompt(prompt: string, tenant: CorsairTenant, history?: { role: "user" | "assistant"; content: string }[]) {
     if (!process.env.OPENAI_API_KEY) {
         throw new Error(
             "OPENAI_API_KEY is missing. Add it to .env.local before using the AI assistant.",
@@ -101,7 +101,13 @@ export async function runAssistantPrompt(prompt: string, tenant: CorsairTenant) 
 
     const agent = createAssistantAgent(tenant);
 
-    const result = await run(agent, prompt);
+    let finalPrompt = prompt;
+    if (history && history.length > 0) {
+        const historyText = history.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join("\n\n");
+        finalPrompt = `Below is the previous conversation history:\n${historyText}\n\nHere is the user's latest request:\n${prompt}`;
+    }
+
+    const result = await run(agent, finalPrompt);
 
     return {
         output: result.finalOutput ?? "",

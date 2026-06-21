@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
 import { authClient, useSession, signOut } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
-import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2 } from "lucide-react";
+import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2, Grip, Sun, Moon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -626,8 +626,12 @@ export default function GmailDashboard() {
               <h2 className="text-3xl font-display font-bold text-text-primary">
                 Welcome back {fullName?.split(' ')[0] || "Taylor"}
               </h2>
-              
-
+              <button 
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="w-10 h-10 rounded-full bg-bg-elevated border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors shadow-sm"
+              >
+                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
             </div>
 
             {/* Quick Stats Row */}
@@ -788,7 +792,7 @@ export default function GmailDashboard() {
                     const isToday = calYear === realToday.getFullYear() && calMonth === realToday.getMonth() && i + 1 === realToday.getDate();
                     return (
                       <div key={`day-${i}`} className="flex justify-center items-center h-8">
-                        <span className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isToday ? 'bg-text-primary text-bg-base font-bold' : 'text-text-secondary hover:bg-bg-base hover:text-text-primary cursor-pointer'}`}>
+                        <span className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isToday ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm' : 'text-text-secondary hover:bg-bg-base hover:text-text-primary cursor-pointer'}`}>
                           {i + 1}
                         </span>
                       </div>
@@ -1574,7 +1578,7 @@ export default function GmailDashboard() {
         {/* ── AI Assistant ───────────────────────────── */}
         {activeTab === "assistant" && (
           <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden' }}>
-            <AssistantPanel />
+            <AssistantPanel userInitial={avatarInitials} />
           </section>
         )}
 
