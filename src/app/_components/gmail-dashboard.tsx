@@ -626,7 +626,7 @@ export default function GmailDashboard() {
           <section className="panel" id="panel-overview" style={{ padding: '32px', background: 'var(--bg-base)' }}>
             
             {/* Header */}
-            <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-base)', padding: '28px 32px 0 32px', margin: '-32px -32px 0 -32px' }}>
+            <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-base)', padding: '28px 32px 0 32px', margin: '-60px -32px 0 -32px' }}>
               <div className="panel-header" style={{ marginBottom: '24px' }}>
                 <h2 className="panel-title">Welcome back {fullName?.split(' ')[0] || "Taylor"}</h2>
                 <div style={{ flex: 1 }} />
@@ -1586,7 +1586,7 @@ export default function GmailDashboard() {
 
         {/* ── AI Assistant ───────────────────────────── */}
         {activeTab === "assistant" && (
-          <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden' }}>
+          <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden', margin: '-28px -32px 0 -32px' }}>
             <AssistantPanel userInitial={avatarInitials} />
           </section>
         )}

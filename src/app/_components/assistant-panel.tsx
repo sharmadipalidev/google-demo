@@ -21,6 +21,8 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -119,19 +121,13 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       {/* ── Top Header Area ── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-deep)', padding: '28px 32px 0 32px' }}>
-        <div className="panel-header" style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <h2 className="panel-title">AI Assistant</h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Control your workspace workflows with natural language.
-            </p>
-          </div>
+        <div className="panel-header" style={{ marginBottom: '8px' }}>
+          <h2 className="panel-title" style={{ margin: 0 }}>AI Assistant</h2>
           <div style={{ flex: 1 }} />
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="btn-refresh"
             title="Toggle Theme"
-            style={{ alignSelf: 'flex-start' }}
           >
             {mounted && theme === 'dark' ? (
               <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -140,6 +136,9 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
             )}
           </button>
         </div>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          Control your workspace workflows with natural language.
+        </p>
       </div>
 
       {/* ── Center Content Area ── */}
