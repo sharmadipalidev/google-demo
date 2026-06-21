@@ -8,16 +8,16 @@ export const gmailRouter = createTRPCRouter({
   listMessages: protectedProcedure
     .input(
       z.object({
-        maxResults: z.number().min(1).max(50).optional().default(10),
+        maxResults: z.number().min(1).max(50).optional().default(15),
         q: z.string().optional(),
-        pageToken: z.string().optional(),
+        cursor: z.string().nullish(),
       })
     )
     .query(async ({ ctx, input }) => {
       const result = await ctx.tenant.gmail.api.messages.list({
         maxResults: input.maxResults,
         q: input.q,
-        pageToken: input.pageToken,
+        pageToken: input.cursor ?? undefined,
       });
 
       if (!result.messages) return result;

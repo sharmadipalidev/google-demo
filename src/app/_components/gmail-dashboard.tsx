@@ -145,15 +145,6 @@ export default function GmailDashboard() {
     }
   };
 
-  // ── Pagination state
-  const [pageTokens, setPageTokens] = useState<string[]>([]);
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
-
-  useEffect(() => {
-    setPageTokens([]);
-    setCurrentPageIndex(0);
-  }, [activeTab, inboxCategory, searchQuery]);
-
   // ── Compose form state
   const [composeTo, setComposeTo] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
@@ -177,9 +168,14 @@ export default function GmailDashboard() {
   const hasGmail = webhookQuery.data?.plugins?.includes("gmail") ?? false;
   const hasCalendar = webhookQuery.data?.plugins?.includes("googlecalendar") ?? false;
 
-  const messagesQuery = api.gmail.listMessages.useQuery(
-    { maxResults: 10, q: searchQuery || defaultQuery || undefined, pageToken: pageTokens[currentPageIndex] || undefined },
-    { enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab), staleTime: 900000, refetchInterval: 30000 },
+  const messagesQuery = api.gmail.listMessages.useInfiniteQuery(
+    { maxResults: 15, q: searchQuery || defaultQuery || undefined },
+    { 
+      enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab), 
+      staleTime: 900000, 
+      refetchInterval: 30000,
+      getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
+    },
   );
 
   const labelsQuery = api.gmail.listLabels.useQuery(undefined, {
@@ -408,13 +404,6 @@ export default function GmailDashboard() {
     onError: (e) => toast.error(`Send failed: ${e.message}`),
   });
 
-  // Compute stable query key for optimistic cache updates
-  const messagesQueryInput = useMemo(() => ({
-    maxResults: 10,
-    q: searchQuery || defaultQuery || undefined,
-    pageToken: pageTokens[currentPageIndex] || undefined,
-  }), [searchQuery, defaultQuery, pageTokens, currentPageIndex]);
-
   const modifyMutation = api.gmail.modifyMessage.useMutation({
     onMutate: async (variables) => {
       // Cancel outgoing refetches so they don't overwrite our optimistic update
@@ -424,34 +413,39 @@ export default function GmailDashboard() {
       const previousData = messagesQuery.data;
 
       // Optimistically update the messages query cache
-      if (previousData?.messages) {
-        const updatedMessages = previousData.messages.map((msg: any) => {
-          if (msg.id !== variables.id) return msg;
-          let newLabels = [...(msg.labelIds || [])];
-          // Add labels
-          if (variables.addLabelIds) {
-            for (const lbl of variables.addLabelIds) {
-              if (!newLabels.includes(lbl)) newLabels.push(lbl);
-            }
-          }
-          // Remove labels
-          if (variables.removeLabelIds) {
-            newLabels = newLabels.filter((l: string) => !variables.removeLabelIds!.includes(l));
-          }
-          return { ...msg, labelIds: newLabels };
-        })
-        // Remove from list if moved to trash/spam (user expects it to vanish)
-        .filter((msg: any) => {
-          if (variables.addLabelIds?.includes('TRASH') || variables.addLabelIds?.includes('SPAM')) {
-            return msg.id !== variables.id;
-          }
-          return true;
+      if (previousData?.pages) {
+        const updatedPages = previousData.pages.map((page: any) => {
+          return {
+            ...page,
+            messages: (page.messages || []).map((msg: any) => {
+              if (msg.id !== variables.id) return msg;
+              let newLabels = [...(msg.labelIds || [])];
+              // Add labels
+              if (variables.addLabelIds) {
+                for (const lbl of variables.addLabelIds) {
+                  if (!newLabels.includes(lbl)) newLabels.push(lbl);
+                }
+              }
+              // Remove labels
+              if (variables.removeLabelIds) {
+                newLabels = newLabels.filter((l: string) => !variables.removeLabelIds!.includes(l));
+              }
+              return { ...msg, labelIds: newLabels };
+            })
+            // Remove from list if moved to trash/spam (user expects it to vanish)
+            .filter((msg: any) => {
+              if (variables.addLabelIds?.includes('TRASH') || variables.addLabelIds?.includes('SPAM')) {
+                return msg.id !== variables.id;
+              }
+              return true;
+            })
+          };
         });
 
         // Use queryKey filter to update all matching listMessages queries
         queryClient.setQueriesData(
           { queryKey: [['gmail', 'listMessages']] },
-          (old: any) => old ? { ...old, messages: updatedMessages } : old
+          (old: any) => old ? { ...old, pages: updatedPages } : old
         );
       }
 
@@ -916,34 +910,8 @@ export default function GmailDashboard() {
                     }}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
-                  <button
-                    disabled={currentPageIndex === 0}
-                    onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
-                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: currentPageIndex === 0 ? 0.5 : 1, color: 'var(--text-primary)' }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-                  </button>
-                  <button
-                    disabled={!messagesQuery.data?.nextPageToken}
-                    onClick={() => {
-                      if (messagesQuery.data?.nextPageToken) {
-                        const nextToken = messagesQuery.data.nextPageToken;
-                        setPageTokens(prev => {
-                          const newTokens = [...prev];
-                          newTokens[currentPageIndex + 1] = nextToken;
-                          return newTokens;
-                        });
-                        setCurrentPageIndex(p => p + 1);
-                      }
-                    }}
-                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: !messagesQuery.data?.nextPageToken ? 0.5 : 1, color: 'var(--text-primary)' }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
-                </div>
                 <button
-                  className="btn-refresh"
+                  className="btn-icon"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   title="Toggle Theme"
                 >
@@ -1006,9 +974,9 @@ export default function GmailDashboard() {
             {messagesQuery.isLoading && <div className="loading-state"><div className="spinner" /><span>Fetching messages…</span></div>}
             {messagesQuery.error && <div className="error-state">⚠️ {messagesQuery.error.message}</div>}
 
-            {!selectedMessageId && messagesQuery.data?.messages && (
+            {!selectedMessageId && messagesQuery.data?.pages && (
               <ul className="message-list">
-                {messagesQuery.data.messages.map((msg) => {
+                {messagesQuery.data.pages.flatMap(page => page.messages || []).map((msg) => {
                   const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
                   const initial = senderName.charAt(0).toUpperCase();
                   const avatarColor = getAvatarColor(senderName);
@@ -1039,6 +1007,23 @@ export default function GmailDashboard() {
                     </li>
                   )
                 })}
+                {messagesQuery.hasNextPage && (
+                  <div
+                    ref={(node) => {
+                      if (!node) return;
+                      const observer = new IntersectionObserver(entries => {
+                        if (entries[0].isIntersecting && !messagesQuery.isFetchingNextPage) {
+                          messagesQuery.fetchNextPage();
+                        }
+                      }, { rootMargin: '100px' });
+                      observer.observe(node);
+                      return () => observer.disconnect();
+                    }}
+                    style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}
+                  >
+                    {messagesQuery.isFetchingNextPage ? 'Loading more...' : ''}
+                  </div>
+                )}
               </ul>
             )}
 
@@ -1107,7 +1092,7 @@ export default function GmailDashboard() {
               </div>
             )}
 
-            {!messagesQuery.isLoading && !messagesQuery.error && !messagesQuery.data?.messages?.length && (
+            {!messagesQuery.isLoading && !messagesQuery.error && (!messagesQuery.data?.pages || messagesQuery.data.pages[0]?.messages?.length === 0) && (
               <div className="empty-state">
                 <span className="empty-icon">📭</span>
                 <p>No messages found</p>
