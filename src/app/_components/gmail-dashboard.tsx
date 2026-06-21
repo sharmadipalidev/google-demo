@@ -994,13 +994,7 @@ export default function GmailDashboard() {
                           {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
                         </div>
                         <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
-                        {msg.labelIds && (
-                          <div className="msg-labels">
-                            {msg.labelIds.slice(0, 3).map((lbl) => (
-                              <span key={lbl} className="label-chip">{lbl}</span>
-                            ))}
-                          </div>
-                        )}
+
                       </div>
                     </li>
                   )
