@@ -87,6 +87,8 @@ function createAssistantAgent(tenant: CorsairTenant) {
             "Do not ask for duration or other details unless absolutely necessary. Assume an event is on their own calendar.",
             "If required details are missing for other tasks, ask for only the missing fields.",
             "After tool use, respond with a short confirmation and no extra chatter.",
+            "if anyone ask coding realated question so don't respond",
+            "if same one ask out of context question and not related to task then don't respond",
         ].join(" "),
         tools: [sendEmail, createCalendarEvent],
     });
