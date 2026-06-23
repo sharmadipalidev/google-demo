@@ -172,9 +172,9 @@ export default function GmailDashboard() {
 
   const messagesQuery = api.gmail.listMessages.useInfiniteQuery(
     { maxResults: 15, q: searchQuery || defaultQuery || undefined },
-    { 
-      enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab), 
-      staleTime: 900000, 
+    {
+      enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab),
+      staleTime: 900000,
       refetchInterval: 30000,
       getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     },
@@ -191,7 +191,7 @@ export default function GmailDashboard() {
     refetchInterval: 5000,
   });
 
-  
+
   const overviewStatsQuery = api.gmail.getOverviewStats.useQuery(undefined, {
     enabled: hasGmail && activeTab === "overview",
     staleTime: 900000,
@@ -451,15 +451,15 @@ export default function GmailDashboard() {
               }
               return { ...msg, labelIds: newLabels };
             })
-            .filter((msg: any) => {
-              if (variables.addLabelIds?.includes('TRASH') || variables.addLabelIds?.includes('SPAM')) {
-                return msg.id !== variables.id;
-              }
-              if (variables.removeLabelIds?.includes('TRASH')) {
-                return msg.id !== variables.id;
-              }
-              return true;
-            })
+              .filter((msg: any) => {
+                if (variables.addLabelIds?.includes('TRASH') || variables.addLabelIds?.includes('SPAM')) {
+                  return msg.id !== variables.id;
+                }
+                if (variables.removeLabelIds?.includes('TRASH')) {
+                  return msg.id !== variables.id;
+                }
+                return true;
+              })
           };
         });
 
@@ -623,7 +623,7 @@ export default function GmailDashboard() {
               {fullName}
             </span>
           </div>
-          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } }})} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg">
+          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } } })} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg">
             <span style={{ display: 'flex', alignItems: 'center', opacity: 0.8 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </span>
@@ -634,12 +634,12 @@ export default function GmailDashboard() {
 
       {/* ── Main Content ─────────────────────────── */}
       <main className="main-content">
-        
-        
-                {/* ── Overview Dashboard (Image Replica) ── */}
+
+
+        {/* ── Overview Dashboard (Image Replica) ── */}
         {activeTab === "overview" && (
           <section className="panel" id="panel-overview" style={{ padding: '32px', background: 'var(--bg-base)' }}>
-            
+
             {/* Header */}
             <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-base)', padding: '28px 32px 0 32px', margin: '-60px -32px 0 -32px' }}>
               <div className="panel-header" style={{ marginBottom: '24px' }}>
@@ -662,10 +662,10 @@ export default function GmailDashboard() {
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-text-primary">Quick Stats</h3>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 items-start">
               {/* Inbox Card */}
-              <div 
+              <div
                 className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
                 onClick={() => { setActiveTab('inbox'); setSelectedMessageId(null); }}
               >
@@ -681,7 +681,7 @@ export default function GmailDashboard() {
               </div>
 
               {/* Sent Card */}
-              <div 
+              <div
                 className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
                 onClick={() => { setActiveTab('sent'); setSelectedMessageId(null); }}
               >
@@ -697,7 +697,7 @@ export default function GmailDashboard() {
               </div>
 
               {/* Drafts Card */}
-              <div 
+              <div
                 className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
                 onClick={() => { setActiveTab('drafts'); setSelectedMessageId(null); }}
               >
@@ -713,7 +713,7 @@ export default function GmailDashboard() {
               </div>
 
               {/* Starred Card */}
-              <div 
+              <div
                 className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border flex flex-col justify-between cursor-pointer hover:border-text-primary/20 transition-colors group"
                 onClick={() => { setActiveTab('starred'); setSelectedMessageId(null); }}
               >
@@ -730,29 +730,29 @@ export default function GmailDashboard() {
             </div>
             {/* Middle Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              
+
               {/* Activity Chart */}
               <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col relative">
-                
+
                 <EmailActivityChart />
               </div>
 
               {/* Daily Events */}
               <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col">
-                <h3 className="text-lg font-semibold text-text-primary mb-6">Daily Events</h3>
+                <h3 className="text-lg font-semibold text-text-primary mb-6">Daily & Upcoming Events</h3>
                 <div className="space-y-4 flex-1 overflow-y-auto pr-2 min-h-0" style={{ maxHeight: '350px' }}>
                   {(() => {
                     if (!calendarQuery.data?.items) {
                       return (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-text-secondary opacity-50" />
+                        <div className="flex items-center justify-center h-full min-h-[200px]">
+                          <Loader2 className="w-10 h-10 animate-spin text-text-secondary opacity-50" />
                         </div>
                       );
                     }
-                    
+
                     const now = new Date();
                     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    
+
                     const events = calendarQuery.data.items.filter((event: any) => {
                       const start = event.start?.dateTime || event.start?.date;
                       if (!start) return false;
@@ -773,14 +773,14 @@ export default function GmailDashboard() {
                     return events.map((event: any, i: number) => {
                       const colors = ['bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-black dark:text-white'];
                       const c = colors[0];
-                      
+
                       const start = event.start?.dateTime || event.start?.date;
                       const startDate = new Date(start);
                       const isToday = startDate.getDate() === now.getDate() && startDate.getMonth() === now.getMonth() && startDate.getFullYear() === now.getFullYear();
-                      
+
                       const dateStr = formatExactDate(startDate);
                       const colorClass = isToday ? "text-emerald-600 dark:text-[#86efac]" : "text-purple-600 dark:text-[#d8b4fe]";
-                      
+
                       return (
                         <div key={i} className="flex items-center gap-4 group cursor-pointer p-1">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${c}`}>
@@ -809,20 +809,20 @@ export default function GmailDashboard() {
               <div className="bg-bg-elevated rounded-[1.25rem] p-6 shadow-sm border border-border flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <button onClick={handlePrev} className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
                   </button>
                   <h3 className="font-semibold text-text-primary text-[15px]">{currentMonthName}, {calYear}</h3>
                   <button onClick={handleNext} className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
                   </button>
                 </div>
-                
+
                 <div className="grid grid-cols-7 gap-y-4 gap-x-1 text-center mb-4">
                   {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
                     <div key={i} className="text-[13px] font-semibold text-text-primary">{day}</div>
                   ))}
                 </div>
-                
+
                 <div className="grid grid-cols-7 gap-y-4 gap-x-1 text-center text-[13px] font-medium flex-1 content-start">
                   {/* Empty cells */}
                   {Array.from({ length: firstDayOfMonth }).map((_, i) => (
@@ -849,7 +849,7 @@ export default function GmailDashboard() {
 
             {/* Bottom Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
+
               {/* Left Column: Progress Rows */}
               <div className="col-span-1 lg:col-span-2">
                 <div className="flex items-center justify-between mb-6">
@@ -865,6 +865,7 @@ export default function GmailDashboard() {
                       </div>
                       <div>
                         <h4 className="text-[15px] font-semibold text-text-primary">Drive & Email Storage</h4>
+                        <p className="text-[13px] font-medium text-blue-500 mt-0.5">Coming Soon</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
@@ -886,13 +887,13 @@ export default function GmailDashboard() {
                           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
                             <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
                             {systemQuotaQuery.data?.storageQuota && (
-                              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" 
+                              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125"
                                 strokeDashoffset={(() => {
                                   const usage = parseInt(systemQuotaQuery.data.storageQuota.usage || "0", 10);
                                   const limit = parseInt(systemQuotaQuery.data.storageQuota.limit || "1", 10);
                                   const pct = usage / limit;
                                   return 125 - (125 * pct);
-                                })()} 
+                                })()}
                                 className="text-text-primary transition-all duration-1000" strokeLinecap="round" />
                             )}
                           </svg>
@@ -918,6 +919,7 @@ export default function GmailDashboard() {
                       </div>
                       <div>
                         <h4 className="text-[15px] font-semibold text-text-primary">AI Tokens Limit</h4>
+                        <p className="text-[13px] font-medium text-blue-500 mt-0.5">Coming Soon</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
@@ -939,11 +941,11 @@ export default function GmailDashboard() {
                           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
                             <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
                             {systemQuotaQuery.data?.aiTokens && (
-                              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125" 
+                              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="125"
                                 strokeDashoffset={(() => {
                                   const pct = systemQuotaQuery.data.aiTokens.used / systemQuotaQuery.data.aiTokens.total;
                                   return 125 - (125 * pct);
-                                })()} 
+                                })()}
                                 className="text-text-primary transition-all duration-1000" strokeLinecap="round" />
                             )}
                           </svg>
@@ -1058,37 +1060,39 @@ export default function GmailDashboard() {
               <div className={`flex-grow ${selectedMessageId ? "hidden lg:block lg:w-1/2 border-r border-border pr-4 overflow-y-auto" : "w-full overflow-y-auto"}`}>
                 {messagesQuery.data?.pages && (
                   <ul className="message-list">
-                    {messagesQuery.data.pages.flatMap(page => page.messages || []).map((msg) => {
-                      const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
-                      const initial = senderName.charAt(0).toUpperCase();
-                      const avatarColor = getAvatarColor(senderName);
+                    {messagesQuery.data.pages.flatMap(page => page.messages || [])
+                      .filter((msg, index, self) => index === self.findIndex((m) => m.id === msg.id))
+                      .map((msg) => {
+                        const senderName = extractHeader(msg.payload?.headers, "From")?.split('<')[0]?.trim() || "Unknown";
+                        const initial = senderName.charAt(0).toUpperCase();
+                        const avatarColor = getAvatarColor(senderName);
 
-                      return (
-                        <li
-                          key={msg.id}
-                          className={`message-row ${selectedMessageId === msg.id ? 'bg-black/5 dark:bg-white/5 border-l-4 border-l-text-primary' : ''}`}
-                          onClick={() => setSelectedMessageId(msg.id!)}
-                          onMouseEnter={() => { if (msg.id) utils.gmail.getMessage.prefetch({ id: msg.id }); }}
-                          id={`msg-${msg.id}`}
-                        >
-                          <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
-                            {initial}
-                          </div>
-                          <div className="msg-body">
-                            <div className="msg-top-line">
-                              <span className="msg-sender">
-                                {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
-                              </span>
-                              <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
+                        return (
+                          <li
+                            key={msg.id}
+                            className={`message-row ${selectedMessageId === msg.id ? 'bg-black/5 dark:bg-white/5 border-l-4 border-l-text-primary' : ''}`}
+                            onClick={() => setSelectedMessageId(msg.id!)}
+                            onMouseEnter={() => { if (msg.id) utils.gmail.getMessage.prefetch({ id: msg.id }); }}
+                            id={`msg-${msg.id}`}
+                          >
+                            <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
+                              {initial}
                             </div>
-                            <div className="msg-subject">
-                              {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
+                            <div className="msg-body">
+                              <div className="msg-top-line">
+                                <span className="msg-sender">
+                                  {senderName === "Unknown" ? `ID: ${msg.id?.slice(0, 8)}…` : senderName}
+                                </span>
+                                <span className="msg-time">{formatExactDate(msg.internalDate)}</span>
+                              </div>
+                              <div className="msg-subject">
+                                {extractHeader(msg.payload?.headers, "Subject") || "(No Subject)"}
+                              </div>
+                              <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
                             </div>
-                            <p className="msg-snippet">{msg.snippet || "No preview available"}</p>
-                          </div>
-                        </li>
-                      )
-                    })}
+                          </li>
+                        )
+                      })}
                     {messagesQuery.hasNextPage && (
                       <div
                         ref={(node) => {
@@ -1194,7 +1198,7 @@ export default function GmailDashboard() {
                   {/* Reply Section */}
                   <div className="bg-bg-elevated rounded-[1.25rem] p-5 shadow-sm border border-border mt-2 flex flex-col gap-4">
                     <h4 className="font-semibold text-text-primary text-[15px]">Reply</h4>
-                    <textarea 
+                    <textarea
                       className="w-full bg-transparent border border-border rounded-xl p-3 text-[14px] text-text-primary focus:outline-none focus:border-text-primary/30 transition-colors"
                       rows={4}
                       placeholder="Type your reply here..."
@@ -1202,7 +1206,7 @@ export default function GmailDashboard() {
                       onChange={(e) => setReplyBody(e.target.value)}
                     />
                     <div className="flex justify-end">
-                      <button 
+                      <button
                         className="btn-primary"
                         onClick={async () => {
                           if (!replyBody.trim()) return;
@@ -1211,9 +1215,9 @@ export default function GmailDashboard() {
                           const originalMessageId = extractHeader(selectedMessage.data?.payload?.headers, "Message-ID") || "";
                           const originalFrom = extractHeader(selectedMessage.data?.payload?.headers, "From") || "";
                           const threadId = selectedMessage.data?.threadId || "";
-                          
+
                           const replySubject = originalSubject.startsWith("Re:") ? originalSubject : `Re: ${originalSubject}`;
-                          
+
                           const match = originalFrom.match(/<(.+)>/);
                           const toEmail = match ? match[1] : originalFrom;
 
@@ -1314,7 +1318,7 @@ export default function GmailDashboard() {
             <div style={{ position: 'sticky', top: '-28px', zIndex: 10, background: 'var(--bg-deep)', padding: '28px 32px 0 32px', margin: '-28px -32px 0 -32px' }}>
               <div className="panel-header" style={{ marginBottom: '24px' }}>
                 <h2 className="panel-title">Drafts</h2>
-                
+
                 <div className="search-bar">
                   <svg className="search-icon" viewBox="0 0 24 24" fill="none" width="16" height="16">
                     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -1331,7 +1335,7 @@ export default function GmailDashboard() {
                     }}
                   />
                 </div>
-                
+
                 <button
                   className="btn-refresh"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -1942,16 +1946,16 @@ export default function GmailDashboard() {
               <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>Start Time</label>
-                  <DateTimePicker 
-                    value={editingEventData.start} 
-                    onChange={val => setEditingEventData({ ...editingEventData, start: val })} 
+                  <DateTimePicker
+                    value={editingEventData.start}
+                    onChange={val => setEditingEventData({ ...editingEventData, start: val })}
                   />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>End Time</label>
-                  <DateTimePicker 
-                    value={editingEventData.end} 
-                    onChange={val => setEditingEventData({ ...editingEventData, end: val })} 
+                  <DateTimePicker
+                    value={editingEventData.end}
+                    onChange={val => setEditingEventData({ ...editingEventData, end: val })}
                   />
                 </div>
               </div>
@@ -1991,7 +1995,7 @@ export default function GmailDashboard() {
       {showConnectModal && (
         <div className="modal-overlay" onClick={() => setShowConnectModal(false)} style={{ zIndex: 9999 }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', padding: '32px' }}>
-            <button 
+            <button
               onClick={() => setShowConnectModal(false)}
               style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
             >
@@ -2001,7 +2005,7 @@ export default function GmailDashboard() {
               <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>Connect Accounts</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>To use the dashboard, please connect your Google accounts.</p>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {!webhookQuery.data?.plugins?.includes("gmail") && (
                 <a
@@ -2015,7 +2019,7 @@ export default function GmailDashboard() {
                   Connect Gmail
                 </a>
               )}
-              
+
               {!webhookQuery.data?.plugins?.includes("googlecalendar") && (
                 <a
                   href="/api/connect?plugin=googlecalendar"

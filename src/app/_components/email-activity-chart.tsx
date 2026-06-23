@@ -60,8 +60,8 @@ export function EmailActivityChart() {
         <div className="absolute left-0 right-0 top-3/4 h-px bg-border/50 pointer-events-none z-0"></div>
         
         {activityQuery.isLoading ? (
-          <div className="flex items-center justify-center flex-1 h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-text-secondary opacity-50" />
+          <div className="flex items-center justify-center flex-1 h-full min-h-[150px] z-10 relative bg-bg-elevated">
+            <Loader2 className="w-10 h-10 animate-spin text-text-secondary opacity-50" />
           </div>
         ) : (
           <div 
