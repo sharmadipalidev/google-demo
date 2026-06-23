@@ -1755,7 +1755,7 @@ export default function GmailDashboard() {
 
         {/* ── AI Assistant ───────────────────────────── */}
         {activeTab === "assistant" && (
-          <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden', margin: '-28px -32px 0 -32px' }}>
+          <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden', margin: '-28px -32px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <AssistantPanel userInitial={avatarInitials} />
           </section>
         )}

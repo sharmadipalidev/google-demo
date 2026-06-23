@@ -76,6 +76,102 @@ function createAssistantAgent(tenant: CorsairTenant) {
         },
     });
 
+    const searchEmails = tool({
+        name: "search_emails",
+        description: "Search for emails in the user's Gmail account based on a query.",
+        parameters: z.object({
+            q: z.string().describe("The search query. Examples: 'is:unread', 'newer_than:1d', 'from:boss@example.com', 'subject:urgent'"),
+            maxResults: z.number().optional().describe("Maximum number of emails to retrieve (default 10, max 20)"),
+        }),
+        strict: true,
+        execute: async ({ q, maxResults = 10 }) => {
+            try {
+                const res = await tenant.gmail.api.messages.list({ q, maxResults: Math.min(maxResults, 20) });
+                if (!res.messages || res.messages.length === 0) return "No emails found matching your query.";
+                
+                const fullMessages = await Promise.all(
+                    res.messages.map(async (m) => {
+                        if (!m.id) return null;
+                        const msg = await tenant.gmail.api.messages.get({ id: m.id, format: "full" });
+                        const subjectHeader = msg.payload?.headers?.find(h => h.name === 'Subject');
+                        const fromHeader = msg.payload?.headers?.find(h => h.name === 'From');
+                        let textPart = msg.payload?.parts?.find(p => p.mimeType === 'text/plain')?.body?.data;
+                        if (!textPart && msg.payload?.body?.data) textPart = msg.payload.body.data;
+                        
+                        let decodedBody = "";
+                        if (textPart) {
+                            decodedBody = Buffer.from(textPart, 'base64').toString('utf-8').substring(0, 500);
+                        }
+                        
+                        return {
+                            id: msg.id,
+                            subject: subjectHeader?.value || "No Subject",
+                            from: fromHeader?.value || "Unknown Sender",
+                            snippet: msg.snippet,
+                            bodySnippet: decodedBody
+                        };
+                    })
+                );
+                
+                return JSON.stringify(fullMessages.filter(Boolean));
+            } catch (e: any) {
+                return `Failed to search emails: ${e.message}`;
+            }
+        }
+    });
+
+    const getCalendarEvents = tool({
+        name: "get_calendar_events",
+        description: "List upcoming events from the user's Google Calendar for a specific timeframe.",
+        parameters: z.object({
+            timeMin: z.string().describe("Start time in ISO format (e.g., 2026-06-18T00:00:00Z)"),
+            timeMax: z.string().describe("End time in ISO format (e.g., 2026-06-19T00:00:00Z)"),
+        }),
+        strict: true,
+        execute: async ({ timeMin, timeMax }) => {
+            try {
+                const res = await tenant.googlecalendar.api.events.getMany({
+                    calendarId: "primary",
+                    timeMin,
+                    timeMax,
+                    singleEvents: true,
+                    orderBy: "startTime"
+                });
+                if (!res.items || res.items.length === 0) return "No events found for this timeframe.";
+                
+                const events = res.items.map(e => ({
+                    summary: e.summary,
+                    start: e.start?.dateTime || e.start?.date,
+                    end: e.end?.dateTime || e.end?.date,
+                    description: e.description
+                }));
+                return JSON.stringify(events);
+            } catch (e: any) {
+                return `Failed to get calendar events: ${e.message}`;
+            }
+        }
+    });
+
+    const archiveEmail = tool({
+        name: "archive_email",
+        description: "Archive an email by removing it from the INBOX.",
+        parameters: z.object({
+            id: z.string().describe("The ID of the email message to archive"),
+        }),
+        strict: true,
+        execute: async ({ id }) => {
+            try {
+                await tenant.gmail.api.messages.modify({
+                    id,
+                    removeLabelIds: ["INBOX"]
+                });
+                return `Email ${id} archived successfully.`;
+            } catch (e: any) {
+                return `Failed to archive email: ${e.message}`;
+            }
+        }
+    });
+
     return new Agent({
         name: "corsair-assistant",
         instructions: [
@@ -87,10 +183,9 @@ function createAssistantAgent(tenant: CorsairTenant) {
             "Do not ask for duration or other details unless absolutely necessary. Assume an event is on their own calendar.",
             "If required details are missing for other tasks, ask for only the missing fields.",
             "After tool use, respond with a short confirmation and no extra chatter.",
-            "if anyone ask coding realated question so don't respond",
-            "if same one ask out of context question and not related to task then don't respond",
+            "You must only answer questions and perform tasks related to Gmail and Google Calendar. If a user asks something unrelated to emails or calendar events, politely decline and state your purpose. You should answer all tasks related to Gmail and Google Calendar.",
         ].join(" "),
-        tools: [sendEmail, createCalendarEvent],
+        tools: [sendEmail, createCalendarEvent, searchEmails, getCalendarEvents, archiveEmail],
     });
 }
 
@@ -103,13 +198,19 @@ export async function runAssistantPrompt(prompt: string, tenant: CorsairTenant, 
 
     const agent = createAssistantAgent(tenant);
 
-    let finalPrompt = prompt;
-    if (history && history.length > 0) {
-        const historyText = history.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join("\n\n");
-        finalPrompt = `Below is the previous conversation history:\n${historyText}\n\nHere is the user's latest request:\n${prompt}`;
+    const messages: any[] = [];
+    if (history) {
+        for (const h of history) {
+            if (h.role === "user") {
+                messages.push({ role: h.role, content: h.content });
+            } else {
+                messages.push({ role: h.role, content: [{ type: "output_text", text: h.content }] });
+            }
+        }
     }
+    messages.push({ role: "user", content: prompt });
 
-    const result = await run(agent, finalPrompt);
+    const result = await run(agent, messages as any);
 
     return {
         output: result.finalOutput ?? "",
