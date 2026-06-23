@@ -28,7 +28,8 @@ export const calendarRouter = createTRPCRouter({
 
         return { items: result.items || [], authError: null };
       } catch (e: any) {
-        return { items: [], authError: e.message };
+        console.error("[calendar.listEvents] API Error:", e);
+        return { items: [], authError: e?.message || "Unknown error" };
       }
     }),
 
@@ -57,7 +58,7 @@ export const calendarRouter = createTRPCRouter({
         });
         return result;
       } catch (e: any) {
-        throw new Error(`Failed to create event: ${e.message}`);
+        throw new Error(`Failed to create event: ${e?.message || 'Unknown error'}`);
       }
     }),
 
@@ -88,7 +89,7 @@ export const calendarRouter = createTRPCRouter({
         });
         return result;
       } catch (e: any) {
-        throw new Error(`Failed to update event: ${e.message}`);
+        throw new Error(`Failed to update event: ${e?.message || 'Unknown error'}`);
       }
     }),
 
@@ -108,7 +109,7 @@ export const calendarRouter = createTRPCRouter({
         return { success: true };
       } catch (e: any) {
         console.error("Delete event failed:", e);
-        const details = e.response?.data ? JSON.stringify(e.response.data) : (e.cause ? JSON.stringify(e.cause) : e.message);
+        const details = e?.response?.data ? JSON.stringify(e.response.data) : (e?.cause ? JSON.stringify(e.cause) : e?.message || "Unknown error");
         throw new Error(`${details}`);
       }
     }),

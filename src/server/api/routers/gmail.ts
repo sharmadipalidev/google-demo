@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { eq, and } from "drizzle-orm";
-import { corsairAccounts, corsairIntegrations } from "@/server/db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { corsairAccounts, corsairIntegrations, corsairEntities } from "@/server/db/schema";
 
 export const gmailRouter = createTRPCRouter({
   // List messages from Gmail
@@ -11,44 +11,147 @@ export const gmailRouter = createTRPCRouter({
         maxResults: z.number().min(1).max(50).optional().default(15),
         q: z.string().optional(),
         cursor: z.string().nullish(),
+        refresh: z.boolean().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      const result = await ctx.tenant.gmail.api.messages.list({
-        maxResults: input.maxResults,
-        q: input.q,
-        pageToken: input.cursor ?? undefined,
-      });
+      // 1. Fetch account ID to look up cached entities
+      const gmailAccount = await ctx.db
+        .select({ id: corsairAccounts.id })
+        .from(corsairAccounts)
+        .innerJoin(corsairIntegrations, eq(corsairAccounts.integrationId, corsairIntegrations.id))
+        .where(
+          and(
+            eq(corsairAccounts.tenantId, ctx.userId),
+            eq(corsairIntegrations.name, 'gmail')
+          )
+        )
+        .limit(1)
+        .then(rows => rows[0]);
 
-      if (!result.messages) return result;
+      let emails: any[] = [];
+      let nextCursor: string | null = null;
+      let fetchedFromGmail = false;
 
-      // Fetch only metadata (headers) for each message — NOT full body content.
-      // Full content is fetched on-demand when user opens a specific message.
-      const messagesWithDetails = await Promise.all(
-        result.messages.map(async (msg) => {
-          if (!msg.id) return msg;
-          try {
-            const metaMsg = await ctx.tenant.gmail.api.messages.get({
-              id: msg.id,
-              format: "metadata"
-            });
-            return {
-              ...msg,
-              payload: metaMsg.payload,
-              snippet: metaMsg.snippet || msg.snippet,
-              internalDate: metaMsg.internalDate || msg.internalDate,
-              labelIds: metaMsg.labelIds || msg.labelIds,
-            };
-          } catch (e) {
-            console.error(`Failed to fetch message metadata for ${msg.id}`, e);
-            return msg;
+      let cacheLabelIds: string[] | null = null;
+      if (!input.q || input.q === "in:inbox category:primary") {
+        cacheLabelIds = ["INBOX"];
+      } else if (input.q === "in:sent") {
+        cacheLabelIds = ["SENT"];
+      } else if (input.q === "in:spam") {
+        cacheLabelIds = ["SPAM"];
+      } else if (input.q === "in:trash") {
+        cacheLabelIds = ["TRASH"];
+      } else if (input.q === "is:starred") {
+        cacheLabelIds = ["STARRED"];
+      } else if (input.q.startsWith("in:inbox category:")) {
+        const cat = input.q.split("category:")[1]?.trim();
+        if (cat === "promotions") cacheLabelIds = ["INBOX", "CATEGORY_PROMOTIONS"];
+        else if (cat === "social") cacheLabelIds = ["INBOX", "CATEGORY_SOCIAL"];
+        else if (cat === "updates") cacheLabelIds = ["INBOX", "CATEGORY_UPDATES"];
+      }
+
+      const isDbToken = !input.cursor || input.cursor.startsWith('db_offset:');
+      const shouldTryCache = isDbToken && !input.refresh && cacheLabelIds !== null;
+
+      // 2. Try Cache
+      if (shouldTryCache && gmailAccount) {
+        let offset = 0;
+        if (input.cursor && input.cursor.startsWith('db_offset:')) {
+          offset = parseInt(input.cursor.split(':')[1] || '0', 10) || 0;
+        }
+
+        const conditions = [
+          eq(corsairEntities.accountId, gmailAccount.id),
+          eq(corsairEntities.entityType, 'messages'),
+          sql`${corsairEntities.id} LIKE 'e_messages_%'`,
+          sql`${corsairEntities.data}->'labelIds' @> ${JSON.stringify(cacheLabelIds)}::jsonb`
+        ];
+
+        try {
+          const rows = await ctx.db
+            .select()
+            .from(corsairEntities)
+            .where(and(...conditions))
+            .orderBy(desc(sql`coalesce((${corsairEntities.data}->>'internalDate')::bigint, extract(epoch from ${corsairEntities.createdAt})::bigint * 1000)`))
+            .limit(input.maxResults)
+            .offset(offset);
+
+          if (rows.length > 0) {
+            emails = rows.map(r => r.data);
+            if (rows.length === input.maxResults) {
+              nextCursor = `db_offset:${offset + input.maxResults}`;
+            }
+            if (offset === 0 || rows.length === input.maxResults) {
+              fetchedFromGmail = true;
+            }
           }
-        })
-      );
+        } catch (dbErr) {
+          console.error("DB cache error:", dbErr);
+        }
+      }
+
+      // 3. Fallback to Gmail API
+      if (!fetchedFromGmail) {
+        const gmailPageToken = (input.cursor && !input.cursor.startsWith('db_offset:')) ? input.cursor : undefined;
+        const result = await ctx.tenant.gmail.api.messages.list({
+          maxResults: input.maxResults,
+          q: input.q,
+          pageToken: gmailPageToken,
+        });
+
+        nextCursor = result.nextPageToken || null;
+
+        if (result.messages) {
+          emails = await Promise.all(
+            result.messages.map(async (msg) => {
+              if (!msg.id) return msg;
+              try {
+                const fullMsg = await ctx.tenant.gmail.api.messages.get({
+                  id: msg.id,
+                  format: "full"
+                });
+                return {
+                  ...msg,
+                  payload: fullMsg.payload,
+                  snippet: fullMsg.snippet || msg.snippet,
+                  internalDate: fullMsg.internalDate || msg.internalDate,
+                  labelIds: fullMsg.labelIds || msg.labelIds,
+                };
+              } catch (e) {
+                console.error(`Failed to fetch message metadata for ${msg.id}`, e);
+                return msg;
+              }
+            })
+          );
+
+          // 4. Cache newly fetched emails
+          if (gmailAccount) {
+            for (const email of emails) {
+              if (!email.id) continue;
+              const entityRowId = `e_messages_${email.id}_a_${gmailAccount.id}`;
+              await ctx.db.insert(corsairEntities).values({
+                id: entityRowId,
+                accountId: gmailAccount.id,
+                entityId: email.id,
+                entityType: 'messages',
+                version: '1',
+                data: email,
+              }).onConflictDoUpdate({
+                target: corsairEntities.id,
+                set: {
+                  data: sql`coalesce(${corsairEntities.data}, '{}'::jsonb) || ${JSON.stringify(email)}::jsonb`,
+                  updatedAt: new Date(),
+                }
+              }).catch(e => console.error("Cache insert error", e));
+            }
+          }
+        }
+      }
 
       return {
-        ...result,
-        messages: messagesWithDetails,
+        messages: emails,
+        nextPageToken: nextCursor,
       };
     }),
 
@@ -56,11 +159,68 @@ export const gmailRouter = createTRPCRouter({
   getMessage: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
+      // 1. Try DB cache first
+      const gmailAccount = await ctx.db
+        .select({ id: corsairAccounts.id })
+        .from(corsairAccounts)
+        .innerJoin(corsairIntegrations, eq(corsairAccounts.integrationId, corsairIntegrations.id))
+        .where(
+          and(
+            eq(corsairAccounts.tenantId, ctx.userId),
+            eq(corsairIntegrations.name, 'gmail')
+          )
+        )
+        .limit(1)
+        .then(rows => rows[0]);
+
+      if (gmailAccount) {
+        const cached = await ctx.db
+          .select({ data: corsairEntities.data })
+          .from(corsairEntities)
+          .where(
+            and(
+              eq(corsairEntities.accountId, gmailAccount.id),
+              eq(corsairEntities.entityId, input.id),
+              eq(corsairEntities.entityType, 'messages')
+            )
+          )
+          .limit(1)
+          .then(rows => rows[0]);
+          
+        if (cached?.data) {
+          const payload = (cached.data as any).payload;
+          if (payload && (payload.parts || payload.body?.data)) {
+            return cached.data as any;
+          }
+        }
+      }
+
+      // 2. Fallback to Gmail API if not cached or partial metadata
       const result = await ctx.tenant.gmail.api.messages.get({
         id: input.id,
         format: "full",
       });
-      return result;
+
+      // 3. Cache the full result
+      if (gmailAccount && result) {
+        const entityRowId = `e_messages_${input.id}_a_${gmailAccount.id}`;
+        await ctx.db.insert(corsairEntities).values({
+          id: entityRowId,
+          accountId: gmailAccount.id,
+          entityId: input.id,
+          entityType: 'messages',
+          version: '1',
+          data: result,
+        }).onConflictDoUpdate({
+          target: corsairEntities.id,
+          set: {
+            data: sql`coalesce(${corsairEntities.data}, '{}'::jsonb) || ${JSON.stringify(result)}::jsonb`,
+            updatedAt: new Date(),
+          }
+        }).catch(e => console.error("Cache insert error", e));
+      }
+
+      return result as any;
     }),
 
   // List all labels
@@ -150,8 +310,7 @@ export const gmailRouter = createTRPCRouter({
       try {
         const res = await ctx.tenant.gmail.api.messages.list({
           q: `after:${startStr} before:${nextStr}`,
-          maxResults: 500,
-          fields: 'messages(id),resultSizeEstimate'
+          maxResults: 500
         });
         
         return {
@@ -176,19 +335,6 @@ export const gmailRouter = createTRPCRouter({
       usageInDriveTrash: "0",
       usage: "5368709120"
     };
-
-    try {
-      const auth = ctx.tenant.gmail.api.context._options.auth;
-      const { google } = await import("googleapis");
-      const drive = google.drive({ version: "v3", auth });
-      
-      const about = await drive.about.get({ fields: "storageQuota" });
-      if (about.data.storageQuota) {
-        storageQuota = about.data.storageQuota;
-      }
-    } catch (err) {
-      console.error("Failed to fetch live Drive quota (mocking instead):", err);
-    }
 
     const aiTokens = {
       used: 45000,
@@ -277,6 +423,38 @@ export const gmailRouter = createTRPCRouter({
         addLabelIds: input.addLabelIds,
         removeLabelIds: input.removeLabelIds,
       });
+
+      // Update the database cache if we successfully got new labels
+      if (result.labelIds) {
+        const gmailAccount = await ctx.db
+          .select({ id: corsairAccounts.id })
+          .from(corsairAccounts)
+          .innerJoin(corsairIntegrations, eq(corsairAccounts.integrationId, corsairIntegrations.id))
+          .where(
+            and(
+              eq(corsairAccounts.tenantId, ctx.userId),
+              eq(corsairIntegrations.name, 'gmail')
+            )
+          )
+          .limit(1)
+          .then(rows => rows[0]);
+
+        if (gmailAccount) {
+          await ctx.db.update(corsairEntities)
+            .set({
+              data: sql`jsonb_set(coalesce("data", '{}'::jsonb), '{labelIds}', ${JSON.stringify(result.labelIds)}::jsonb, true)`,
+              updatedAt: new Date()
+            })
+            .where(
+              and(
+                eq(corsairEntities.accountId, gmailAccount.id),
+                eq(corsairEntities.entityId, input.id),
+                eq(corsairEntities.entityType, 'messages')
+              )
+            ).catch(e => console.error("Cache update error", e));
+        }
+      }
+
       return result;
     }),
 

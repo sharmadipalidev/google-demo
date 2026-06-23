@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
 import { authClient, useSession, signOut } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
-import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2, Grip, Sun, Moon, Inbox } from "lucide-react";
+import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2, Grip, Sun, Moon, Inbox, ArchiveRestore, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -284,7 +284,7 @@ export default function GmailDashboard() {
 
   const calendarQuery = api.calendar.listEvents.useQuery(
     { maxResults: 100, q: searchQuery || undefined, timeMin, timeMax },
-    { enabled: hasCalendar && (activeTab === "calendar" || activeTab === "overview"), refetchInterval: 30000 },
+    { enabled: hasCalendar && (activeTab === "calendar" || activeTab === "overview"), refetchInterval: 30000, staleTime: 5 * 60 * 1000 },
   );
 
   const systemQuotaQuery = api.gmail.getSystemQuota.useQuery(undefined, {
@@ -412,6 +412,19 @@ export default function GmailDashboard() {
 
   const modifyMutation = api.gmail.modifyMessage.useMutation({
     onMutate: async (variables) => {
+      // Show optimistic toast
+      if (variables.addLabelIds?.includes('INBOX') && variables.removeLabelIds?.includes('TRASH')) {
+        toast.success("Message recovered to Inbox");
+      } else if (variables.addLabelIds?.includes('TRASH')) {
+        toast.success("Message moved to Trash");
+      } else if (variables.addLabelIds?.includes('SPAM')) {
+        toast.success("Message moved to Spam");
+      } else if (variables.addLabelIds?.includes('STARRED')) {
+        toast.success("Message starred");
+      } else if (variables.removeLabelIds?.includes('STARRED')) {
+        toast.success("Message unstarred");
+      }
+
       // Cancel outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: [['gmail', 'listMessages']] });
 
@@ -438,9 +451,11 @@ export default function GmailDashboard() {
               }
               return { ...msg, labelIds: newLabels };
             })
-            // Remove from list if moved to trash/spam (user expects it to vanish)
             .filter((msg: any) => {
               if (variables.addLabelIds?.includes('TRASH') || variables.addLabelIds?.includes('SPAM')) {
+                return msg.id !== variables.id;
+              }
+              if (variables.removeLabelIds?.includes('TRASH')) {
                 return msg.id !== variables.id;
               }
               return true;
@@ -457,10 +472,10 @@ export default function GmailDashboard() {
 
       return { previousData };
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       // Background refetch to sync with server truth
-      messagesQuery.refetch();
-      selectedMessage.refetch();
+      queryClient.invalidateQueries({ queryKey: [['gmail', 'listMessages']] });
+      queryClient.invalidateQueries({ queryKey: [['gmail', 'getMessage']] });
     },
     onError: (e, _variables, context: any) => {
       // Roll back on error
@@ -728,7 +743,11 @@ export default function GmailDashboard() {
                 <div className="space-y-4 flex-1 overflow-y-auto pr-2 min-h-0" style={{ maxHeight: '350px' }}>
                   {(() => {
                     if (!calendarQuery.data?.items) {
-                      return <div className="text-sm text-text-secondary text-center py-4">Loading agenda...</div>;
+                      return (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-text-secondary opacity-50" />
+                        </div>
+                      );
                     }
                     
                     const now = new Date();
@@ -1101,36 +1120,51 @@ export default function GmailDashboard() {
                       </button>
                       <div className="hidden lg:block"></div>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
-                          disabled={modifyMutation.isPending}
-                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                        >
-                          <Star className="w-4 h-4" fill={selectedMessage.data?.labelIds?.includes('STARRED') ? "currentColor" : "none"} />
-                          {selectedMessage.data?.labelIds?.includes('STARRED') ? 'Unstar' : 'Star'}
-                        </button>
-                        <button
-                          onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
-                          disabled={modifyMutation.isPending}
-                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                        >
-                          <ShieldAlert className="w-4 h-4" />
-                          Spam
-                        </button>
-                        <button
-                          onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
-                          disabled={modifyMutation.isPending}
-                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#ef4444', transition: 'background 0.2s' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Trash
-                        </button>
+                        {activeTab === 'trash' ? (
+                          <button
+                            onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['INBOX'], removeLabelIds: ['TRASH'] }); setSelectedMessageId(null); }}
+                            disabled={modifyMutation.isPending}
+                            style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                          >
+                            <ArchiveRestore className="w-4 h-4" />
+                            Recover
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => modifyMutation.mutate({ id: selectedMessageId, addLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? [] : ['STARRED'], removeLabelIds: selectedMessage.data?.labelIds?.includes('STARRED') ? ['STARRED'] : [] })}
+                              disabled={modifyMutation.isPending}
+                              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                            >
+                              <Star className="w-4 h-4" fill={selectedMessage.data?.labelIds?.includes('STARRED') ? "currentColor" : "none"} />
+                              {selectedMessage.data?.labelIds?.includes('STARRED') ? 'Unstar' : 'Star'}
+                            </button>
+                            <button
+                              onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
+                              disabled={modifyMutation.isPending}
+                              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', transition: 'background 0.2s' }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-deep)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                            >
+                              <ShieldAlert className="w-4 h-4" />
+                              Spam
+                            </button>
+                            <button
+                              onClick={() => { modifyMutation.mutate({ id: selectedMessageId, addLabelIds: ['TRASH'], removeLabelIds: ['INBOX'] }); setSelectedMessageId(null); }}
+                              disabled={modifyMutation.isPending}
+                              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#ef4444', transition: 'background 0.2s' }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Trash
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="detail-card">

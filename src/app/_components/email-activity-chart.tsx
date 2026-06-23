@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/trpc/react";
+import { Loader2 } from "lucide-react";
 
 export function EmailActivityChart() {
   const [data, setData] = useState<any[]>([]);
@@ -60,7 +61,7 @@ export function EmailActivityChart() {
         
         {activityQuery.isLoading ? (
           <div className="flex items-center justify-center flex-1 h-32">
-            <span className="text-sm text-text-secondary">Loading activity...</span>
+            <Loader2 className="w-6 h-6 animate-spin text-text-secondary opacity-50" />
           </div>
         ) : (
           <div 
