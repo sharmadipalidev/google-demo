@@ -5,6 +5,7 @@ import { api } from "@/trpc/react";
 import { Mic, Send, Bot, Sparkles, X, Edit2, ArrowRight, History, PlusSquare, Plus, ChevronDown } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { useSession } from "@/lib/auth-client";
 
 // Add TypeScript definitions for Web Speech API
 declare global {
@@ -22,6 +23,9 @@ interface ChatSession {
 }
 
 export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) {
+  const { data: session } = useSession();
+  const userName = session?.user?.name?.split(' ')[0] || "there";
+  
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
   const [isListening, setIsListening] = useState(false);
@@ -307,7 +311,7 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
         ) : (
           <div className="w-full max-w-3xl mx-auto text-center mt-[-40px]">
             <h2 className="text-[40px] font-normal text-[#1a1a1a] dark:text-white mb-8 transition-colors">
-              Hi Dipali, let's get into it
+              Hi {userName}, let's get into it
             </h2>
             {renderInputArea()}
           </div>

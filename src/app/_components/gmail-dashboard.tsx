@@ -836,7 +836,7 @@ export default function GmailDashboard() {
                     const isToday = calYear === realToday.getFullYear() && calMonth === realToday.getMonth() && i + 1 === realToday.getDate();
                     return (
                       <div key={`day-${i}`} className="flex justify-center items-center h-8">
-                        <span className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isToday ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm' : 'text-text-secondary hover:bg-bg-base hover:text-text-primary cursor-pointer'}`}>
+                        <span className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isToday ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm' : 'text-text-secondary hover:bg-black/10 dark:hover:bg-white/10 hover:text-[#1a1a1a] dark:hover:text-white cursor-pointer'}`}>
                           {i + 1}
                         </span>
                       </div>
@@ -865,7 +865,7 @@ export default function GmailDashboard() {
                       </div>
                       <div>
                         <h4 className="text-[15px] font-semibold text-text-primary">Drive & Email Storage</h4>
-                        <p className="text-[13px] font-medium text-blue-500 mt-0.5">Coming Soon</p>
+                        <p className="text-[13px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">Coming Soon</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
@@ -919,7 +919,7 @@ export default function GmailDashboard() {
                       </div>
                       <div>
                         <h4 className="text-[15px] font-semibold text-text-primary">AI Tokens Limit</h4>
-                        <p className="text-[13px] font-medium text-blue-500 mt-0.5">Coming Soon</p>
+                        <p className="text-[13px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">Coming Soon</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
