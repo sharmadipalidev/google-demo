@@ -2,6 +2,9 @@
 
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { useSession, signIn } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import Script from "next/script";
 
 const tiers = [
   {
@@ -69,7 +72,82 @@ const item = {
 };
 
 export default function Pricing() {
+  const { data: session } = useSession();
+  const isSignedIn = !!session;
+  const router = useRouter();
+
+  const handleAction = async (plan: string) => {
+    if (!isSignedIn) {
+      signIn.social({ provider: 'google', callbackURL: '/gmail' });
+      return;
+    }
+
+    if (plan !== "Pro") {
+      router.push("/gmail");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 19900, currency: "INR" }),
+      });
+
+      const orderData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(orderData.error || "Failed to create order");
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Neurosync Pro",
+        description: "Upgrade to Pro Plan",
+        order_id: orderData.order_id,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (!verifyRes.ok) throw new Error("Payment verification failed");
+            
+            alert("Payment successful! Welcome to Pro.");
+            router.push("/gmail");
+          } catch (e: any) {
+            alert("Payment verification failed: " + e.message);
+          }
+        },
+        theme: {
+          color: "#1a1a1a",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        alert("Payment failed: " + response.error.description);
+      });
+      rzp.open();
+    } catch (e: any) {
+      alert("Checkout error: " + e.message);
+    }
+  };
+
   return (
+    <>
+    <Script
+      src="https://checkout.razorpay.com/v1/checkout.js"
+      strategy="afterInteractive"
+    />
     <section id="pricing" className="py-24 bg-bg-base relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         
@@ -170,6 +248,7 @@ export default function Pricing() {
 
               {/* CTA Button */}
               <button
+                onClick={() => handleAction(tier.name)}
                 className={`relative z-10 w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${tier.ctaStyle}`}
               >
                 {tier.cta}
@@ -180,6 +259,7 @@ export default function Pricing() {
 
       </div>
     </section>
+    </>
   );
 }
 
