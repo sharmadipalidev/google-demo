@@ -11,8 +11,9 @@ import { Toaster } from "@/components/ui/sonner";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Neurosync",
+  title: "neurosync",
   description: "Prompt Gmail and Google Calendar actions with Neurosync",
+  icons: [{ rel: "icon", url: "/new-favicon.svg" }],
 };
 
 const inter = Inter({

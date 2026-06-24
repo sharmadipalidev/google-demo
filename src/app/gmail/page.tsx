@@ -4,7 +4,7 @@ import { HydrateClient } from "@/trpc/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Neurosync Dashboard",
+  title: "neurosync Dashboard",
   description: "Test your Gmail webhooks and API integration powered by Neurosync",
 };
 
