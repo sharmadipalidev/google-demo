@@ -1802,7 +1802,7 @@ export default function GmailDashboard() {
               {/* Connected Accounts Section (Corsair) */}
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
                 <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Connected Accounts</h3>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Connect your Google accounts to enable Gmail and Calendar integrations via Neurosync.</p>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Connect your Google accounts to enable Gmail and Calendar integrations via neurosync.</p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {/* Gmail */}
@@ -1853,7 +1853,7 @@ export default function GmailDashboard() {
                 </div>
 
                 <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '16px', lineHeight: '1.5' }}>
-                  🔒 Powered by <strong>Neurosync</strong> — your credentials are encrypted and stored securely. Tokens are auto-refreshed.
+                  🔒 Powered by <strong>neurosync</strong> — your credentials are encrypted and stored securely. Tokens are auto-refreshed.
                 </p>
               </div>
               <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>

@@ -15,7 +15,7 @@ export default function DashboardShowcase() {
       >
         <Image
           src="/Screenshot 2026-06-21 222038.png"
-          alt="Neurosync Dashboard Interface"
+          alt="neurosync Dashboard Interface"
           width={1920}
           height={1080}
           className="w-full h-auto object-cover"

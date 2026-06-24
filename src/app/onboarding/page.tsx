@@ -52,7 +52,7 @@ export default async function OnboardingPage() {
             Connect your accounts
           </h1>
           <p className="text-[#4b4b4b] font-sans">
-            Neurosync needs access to your workspace to automate your emails and meetings.
+            neurosync needs access to your workspace to automate your emails and meetings.
           </p>
         </div>
 

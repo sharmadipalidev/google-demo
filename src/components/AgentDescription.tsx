@@ -40,7 +40,7 @@ export default function AgentDescription() {
               transition={{ delay: 0.2 }}
               className="text-[#4b4b4b] text-lg leading-relaxed mb-8"
             >
-              Neurosync's AI agent isn't just a chatbot—it's a proactive assistant deeply integrated into your workflow. It understands context, manages your inbox, and schedules meetings autonomously.
+              neurosync's AI agent isn't just a chatbot—it's a proactive assistant deeply integrated into your workflow. It understands context, manages your inbox, and schedules meetings autonomously.
             </motion.p>
             
             <motion.div
@@ -81,7 +81,7 @@ export default function AgentDescription() {
                   <Bot className="w-5 h-5 text-[#1a1a1a]" />
                 </div>
                 <div>
-                  <h3 className="text-[#1a1a1a] font-medium">Neurosync Agent</h3>
+                  <h3 className="text-[#1a1a1a] font-medium">neurosync Agent</h3>
                   <p className="text-[#8e8e8e] text-sm">Always online</p>
                 </div>
               </div>

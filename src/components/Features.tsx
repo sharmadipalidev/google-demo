@@ -81,7 +81,7 @@ export default function Features() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-4 text-[#8e8e8e] text-lg max-w-2xl mx-auto"
           >
-            Neurosync acts as your personal AI operator, handling the busywork so you can focus on what matters.
+            neurosync acts as your personal AI operator, handling the busywork so you can focus on what matters.
           </motion.p>
         </div>
 

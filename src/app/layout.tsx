@@ -12,7 +12,7 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "neurosync",
-  description: "Prompt Gmail and Google Calendar actions with Neurosync",
+  description: "Prompt Gmail and Google Calendar actions with neurosync",
   icons: [{ rel: "icon", url: "/new-favicon.svg" }],
 };
 
