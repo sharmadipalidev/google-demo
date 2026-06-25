@@ -62,7 +62,9 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
 
       if (isNewSession) {
         setCurrentSessionId(sessionId);
-        const title = messages[0].content.substring(0, 40) + (messages[0].content.length > 40 ? "..." : "");
+        const firstMsg = messages[0];
+        if (!firstMsg) return prev;
+        const title = firstMsg.content.substring(0, 40) + (firstMsg.content.length > 40 ? "..." : "");
         newSessions = [{ id: sessionId, title, messages, updatedAt: Date.now() }, ...prev];
       } else {
         newSessions = prev.map(s =>

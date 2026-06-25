@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AssistantPanel } from "@/app/_components/assistant-panel";
 import { authClient, useSession, signOut } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
+import Script from "next/script";
 import { Star, ShieldAlert, Trash2, Mail, Send, FileEdit, AlertTriangle, Calendar as CalendarIcon, Sparkles, Activity, Bot, Link2, Grip, Sun, Moon, Inbox, ArchiveRestore, Loader2 } from "lucide-react";
 import {
   Select,
@@ -105,7 +106,15 @@ type Tab = "inbox" | "labels" | "drafts" | "compose" | "webhook" | "calendar" | 
 // ─── Main Component ──────────────────────────────────────
 export default function GmailDashboard() {
   const { data: session } = useSession();
-  const user = session?.user;
+  const [isDemo, setIsDemo] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsDemo(localStorage.getItem("isDemoMode") === "true");
+    }
+  }, []);
+
+  const user = isDemo ? { id: "demo-user-id", name: "maomao", email: "maomao@gmail.com", image: null } : session?.user;
   const fullName = user?.name || "User";
   const avatarInitials = fullName.charAt(0).toUpperCase();
   const queryClient = useQueryClient();
@@ -128,6 +137,13 @@ export default function GmailDashboard() {
   const [profileName, setProfileName] = useState(fullName);
   const [profileEmail, setProfileEmail] = useState(user?.email || "user@example.com");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name);
+      setProfileEmail(user.email || "user@example.com");
+    }
+  }, [user]);
 
   const handleSaveProfile = async () => {
     setIsSavingSettings(true);
@@ -163,45 +179,629 @@ export default function GmailDashboard() {
     }
     return "";
   }, [activeTab, inboxCategory]);
+  const webhookQueryReal = api.gmail.webhookStatus.useQuery(undefined, {
+    enabled: mounted && !isDemo,
+  });
+  const webhookQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      status: "connected",
+      plugins: ["gmail", "googlecalendar"],
+      endpoint: "https://demo.neurosync.com/webhook",
+      timestamp: new Date().toISOString()
+    },
+    refetch: () => Promise.resolve()
+  } : webhookQueryReal) as typeof webhookQueryReal;
 
-  const webhookQuery = api.gmail.webhookStatus.useQuery(undefined);
   const utils = api.useUtils();
 
-  const hasGmail = webhookQuery.data?.plugins?.includes("gmail") ?? false;
-  const hasCalendar = webhookQuery.data?.plugins?.includes("googlecalendar") ?? false;
+  const hasGmail = isDemo ? true : (webhookQuery.data?.plugins?.includes("gmail") ?? false);
+  const hasCalendar = isDemo ? true : (webhookQuery.data?.plugins?.includes("googlecalendar") ?? false);
 
-  const messagesQuery = api.gmail.listMessages.useInfiniteQuery(
+  const mockMessages = useMemo(() => {
+    return [
+      // CATEGORY_PERSONAL (7 messages, 3 unread, 4 read)
+      {
+        id: "msg_1",
+        threadId: "thread_1",
+        internalDate: Date.now() - 3600000 * 2,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_PERSONAL"],
+        snippet: "Hey Maomao! I reviewed the latest neurosync dashboard design. It looks absolutely stunning. The Razorpay integration is flawless. Let's launch it tomorrow morning!",
+        payload: {
+          headers: [
+            { name: "From", value: "Alex Rivera <alex@neurosync.com>" },
+            { name: "Subject", value: "Neurosync Dashboard Update - Launch Ready!" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 2).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hi Maomao,<br/><br/>I reviewed the latest neurosync dashboard design. It looks absolutely stunning. The Razorpay integration is flawless. Let's launch it tomorrow morning!<br/><br/>Best,<br/>Alex") : ""
+          }
+        }
+      },
+      {
+        id: "msg_5",
+        threadId: "thread_5",
+        internalDate: Date.now() - 3600000 * 72,
+        labelIds: ["STARRED", "INBOX", "CATEGORY_PERSONAL"],
+        snippet: "Important guidelines regarding our Google Cloud API integration keys and Razorpay secrets. Please read this before modifying any env files.",
+        payload: {
+          headers: [
+            { name: "From", value: "Security Team <security@neurosync.com>" },
+            { name: "Subject", value: "🔑 Security Guidelines: API Key Rotation" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 72).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Please check the security guidelines on Google API scope usage and Razorpay key management.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_6",
+        threadId: "thread_6",
+        internalDate: Date.now() - 3600000 * 1,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_PERSONAL"],
+        snippet: "Can you jump on a quick call to debug the OAuth consent screen with Google? It seems we need to verify a few domain ownership records.",
+        payload: {
+          headers: [
+            { name: "From", value: "Dev Lead <dev@neurosync.com>" },
+            { name: "Subject", value: "Quick call: Google OAuth Consent Screen debug" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 1).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hey Maomao,<br/><br/>Can you jump on a quick call to debug the OAuth consent screen with Google? It seems we need to verify a few domain ownership records.<br/><br/>Thanks!") : ""
+          }
+        }
+      },
+      {
+        id: "msg_7",
+        threadId: "thread_7",
+        internalDate: Date.now() - 3600000 * 10,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_PERSONAL"],
+        snippet: "Thanks for the feedback on the landing page layout. I have updated the pricing component with the green color accent you suggested.",
+        payload: {
+          headers: [
+            { name: "From", value: "Sarah Chen <sarah@neurosync.com>" },
+            { name: "Subject", value: "Landing Page Updates Completed" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 10).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hi Maomao,<br/><br/>Thanks for the feedback on the landing page layout. I have updated the pricing component with the green color accent you suggested. Let me know if you want to tweak anything else.<br/><br/>Cheers,<br/>Sarah") : ""
+          }
+        }
+      },
+      {
+        id: "msg_8",
+        threadId: "thread_8",
+        internalDate: Date.now() - 3600000 * 30,
+        labelIds: ["INBOX", "CATEGORY_PERSONAL"],
+        snippet: "Our investor deck draft is ready for review. I put emphasis on the billing features and Razorpay integrations as requested.",
+        payload: {
+          headers: [
+            { name: "From", value: "Marcus Brody <marcus@neurosync.com>" },
+            { name: "Subject", value: "Neurosync Investor Deck Draft v1" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 30).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hi Maomao,<br/><br/>Our investor deck draft is ready for review. I put emphasis on the billing features and Razorpay integrations as requested. Let me know when we can review it together.<br/><br/>Best,<br/>Marcus") : ""
+          }
+        }
+      },
+      {
+        id: "msg_9",
+        threadId: "thread_9",
+        internalDate: Date.now() - 3600000 * 40,
+        labelIds: ["INBOX", "CATEGORY_PERSONAL", "STARRED"],
+        snippet: "Great job on completing the dashboard milestones! The customer demo went super well and stakeholders were super excited about the speed.",
+        payload: {
+          headers: [
+            { name: "From", value: "Julia Vance <julia@neurosync.com>" },
+            { name: "Subject", value: "🎉 Customer Demo Feedback - Super Success!" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 40).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hi Maomao,<br/><br/>Great job on completing the dashboard milestones! The customer demo went super well and stakeholders were super excited about the speed.<br/><br/>Best,<br/>Julia") : ""
+          }
+        }
+      },
+      {
+        id: "msg_10",
+        threadId: "thread_10",
+        internalDate: Date.now() - 3600000 * 120,
+        labelIds: ["INBOX", "CATEGORY_PERSONAL"],
+        snippet: "Here is the list of candidates for the Senior Backend position. Please let me know who you'd like to schedule interviews with.",
+        payload: {
+          headers: [
+            { name: "From", value: "HR Recruiting <hr@neurosync.com>" },
+            { name: "Subject", value: "Candidates List: Senior Backend Role" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 120).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hi Maomao,<br/><br/>Here is the list of candidates for the Senior Backend position. Please let me know who you'd like to schedule interviews with.<br/><br/>Best,<br/>HR Team") : ""
+          }
+        }
+      },
+
+      // CATEGORY_PROMOTIONS (6 messages, 2 unread, 4 read)
+      {
+        id: "msg_2",
+        threadId: "thread_2",
+        internalDate: Date.now() - 3600000 * 5,
+        labelIds: ["INBOX", "CATEGORY_PROMOTIONS"],
+        snippet: "Save 50% on all Pro annual subscriptions this week only! Upgrade now to get unlimited AI queries, advanced triggers, and custom actions.",
+        payload: {
+          headers: [
+            { name: "From", value: "Razorpay Offers <offers@razorpay.com>" },
+            { name: "Subject", value: "⚡ Special Deal: 50% Off Pro Plans!" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 5).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Get 50% off Neurosync Pro plan when paying with Razorpay! Premium features await.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_11",
+        threadId: "thread_11",
+        internalDate: Date.now() - 3600000 * 12,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_PROMOTIONS"],
+        snippet: "Introducing Claude 3.5 Sonnet: the smartest AI model yet is now available on our API endpoints. Read our integration docs to upgrade.",
+        payload: {
+          headers: [
+            { name: "From", value: "Anthropic API <news@anthropic.com>" },
+            { name: "Subject", value: "Introducing Claude 3.5 Sonnet: Available Now" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 12).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Claude 3.5 Sonnet is now live. Find out how to upgrade your endpoints and leverage state-of-the-art reasoning.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_12",
+        threadId: "thread_12",
+        internalDate: Date.now() - 3600000 * 18,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_PROMOTIONS"],
+        snippet: "Your $100 Google Cloud Platform promotional credits have been added to your billing profile. Start exploring Vertex AI pipelines today.",
+        payload: {
+          headers: [
+            { name: "From", value: "Google Cloud Platform <gcp-noreply@google.com>" },
+            { name: "Subject", value: "Credits Active: Start building with GCP Vertex AI" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 18).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("We have credited $100 to your billing account. Take advantage of automated pipelines and model testing.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_13",
+        threadId: "thread_13",
+        internalDate: Date.now() - 3600000 * 36,
+        labelIds: ["INBOX", "CATEGORY_PROMOTIONS"],
+        snippet: "Join our next developer meetup: Building agentic workflows with LangChain and LangGraph. RSVP now to reserve a spot.",
+        payload: {
+          headers: [
+            { name: "From", value: "Vercel Meetups <events@vercel.com>" },
+            { name: "Subject", value: "RSVP: Building Agentic Workflows Meetup" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 36).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Learn how developers build high-performance agentic applications using React, NextJS and LangGraph.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_14",
+        threadId: "thread_14",
+        internalDate: Date.now() - 3600000 * 50,
+        labelIds: ["INBOX", "CATEGORY_PROMOTIONS"],
+        snippet: "Get our new UI component library presets for Next.js. Speed up dashboard customization with Tailwind, Shadcn, and interactive charts.",
+        payload: {
+          headers: [
+            { name: "From", value: "Tailwind UI <newsletter@tailwindui.com>" },
+            { name: "Subject", value: "🎨 Tailwind Presets: Beautiful Dashboard Templates" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 50).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Grab our newly released dashboard layout presets. Optimized for React, Next.js, and dark mode styling.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_15",
+        threadId: "thread_15",
+        internalDate: Date.now() - 3600000 * 80,
+        labelIds: ["INBOX", "CATEGORY_PROMOTIONS"],
+        snippet: "Stripe Atlas pricing update: Launch your US startup with ease. Discover the new simplified dashboard and corporate tax filings support.",
+        payload: {
+          headers: [
+            { name: "From", value: "Stripe Atlas <atlas@stripe.com>" },
+            { name: "Subject", value: "Stripe Atlas: Build Your Startup Simplified" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 80).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Stripe Atlas has introduced new tools for automated cap table management and state tax registrations.") : ""
+          }
+        }
+      },
+
+      // CATEGORY_SOCIAL (4 messages, 2 unread, 2 read)
+      {
+        id: "msg_3",
+        threadId: "thread_3",
+        internalDate: Date.now() - 3600000 * 24,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_SOCIAL"],
+        snippet: "Sarah Chen just tagged you in a comment on 'Neurosync Roadmap'. Click here to reply or view the thread on github.",
+        payload: {
+          headers: [
+            { name: "From", value: "GitHub Notifications <noreply@github.com>" },
+            { name: "Subject", value: "[GitHub] Sarah Chen mentioned you in neurosync/app" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 24).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Sarah Chen tagged you: @maomao can you check if the webhook callback handles Razorpay signatures correctly?") : ""
+          }
+        }
+      },
+      {
+        id: "msg_16",
+        threadId: "thread_16",
+        internalDate: Date.now() - 3600000 * 6,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_SOCIAL"],
+        snippet: "You have 5 new notifications on LinkedIn, including congratulations for your project trending. Connect with new tech leads.",
+        payload: {
+          headers: [
+            { name: "From", value: "LinkedIn Updates <updates@linkedin.com>" },
+            { name: "Subject", value: "LinkedIn: 5 new messages and connection requests" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 6).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("See who is viewing your profile and wishing you well on your new project launch at Neurosync.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_17",
+        threadId: "thread_17",
+        internalDate: Date.now() - 3600000 * 28,
+        labelIds: ["INBOX", "CATEGORY_SOCIAL", "STARRED"],
+        snippet: "Welcome to Product Hunt! Your product 'Neurosync' has been submitted by Alex Rivera. Check out the launch page and replies.",
+        payload: {
+          headers: [
+            { name: "From", value: "Product Hunt <hello@producthunt.com>" },
+            { name: "Subject", value: "😺 Neurosync is live on Product Hunt!" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 28).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Congratulations, Neurosync is live on Product Hunt! Join the conversation and answer launch day questions.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_18",
+        threadId: "thread_18",
+        internalDate: Date.now() - 3600000 * 55,
+        labelIds: ["INBOX", "CATEGORY_SOCIAL"],
+        snippet: "Slack notification: Alex Rivera sent you a message: 'Check out the new design mockups in the figma channel!'",
+        payload: {
+          headers: [
+            { name: "From", value: "Slack Notifications <notification@slack.com>" },
+            { name: "Subject", value: "[Slack] Direct Message from Alex Rivera" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 55).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Alex Rivera: Hey Maomao, could you review the Razorpay settings component in the Figma channel?") : ""
+          }
+        }
+      },
+
+      // CATEGORY_UPDATES (4 messages, 2 unread, 2 read)
+      {
+        id: "msg_4",
+        threadId: "thread_4",
+        internalDate: Date.now() - 3600000 * 48,
+        labelIds: ["INBOX", "CATEGORY_UPDATES"],
+        snippet: "Weekly workspace analytics report is ready. Your AI agent successfully processed 412 triage tasks and auto-replied to 89 emails.",
+        payload: {
+          headers: [
+            { name: "From", value: "Neurosync Bot <bot@neurosync.com>" },
+            { name: "Subject", value: "Weekly Analytics: 412 Triage Tasks Completed" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 48).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Your AI agent resolved 412 tasks last week. Detailed metrics are available on your dashboard.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_19",
+        threadId: "thread_19",
+        internalDate: Date.now() - 3600000 * 8,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_UPDATES"],
+        snippet: "Vercel Deployment: Production deployment for neurosync-dashboard completed successfully. All check-ins and performance logs look healthy.",
+        payload: {
+          headers: [
+            { name: "From", value: "Vercel Deployments <deployments@vercel.com>" },
+            { name: "Subject", value: "Vercel: Deployment Successful (neurosync-dashboard)" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 8).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Production deployment is ready. Vercel Speed Insights reports a 100/100 Core Web Vitals rating.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_20",
+        threadId: "thread_20",
+        internalDate: Date.now() - 3600000 * 14,
+        labelIds: ["INBOX", "UNREAD", "CATEGORY_UPDATES", "STARRED"],
+        snippet: "Linear Issue Update: Task NEURO-412 ('Integrate Razorpay webhook endpoint on Next.js backend') changed status to 'In Progress'.",
+        payload: {
+          headers: [
+            { name: "From", value: "Linear Updates <updates@linear.app>" },
+            { name: "Subject", value: "[Linear] NEURO-412: Razorpay webhook integration is In Progress" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 14).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Sarah Chen has started working on the Razorpay signature verification and automated user plan validation.") : ""
+          }
+        }
+      },
+      {
+        id: "msg_21",
+        threadId: "thread_21",
+        internalDate: Date.now() - 3600000 * 60,
+        labelIds: ["INBOX", "CATEGORY_UPDATES"],
+        snippet: "Domain verification successful for neurosync.com. SPF, DKIM, and DMARC verification records are active on your DNS records.",
+        payload: {
+          headers: [
+            { name: "From", value: "Resend Support <support@resend.com>" },
+            { name: "Subject", value: "Domain Verified: neurosync.com is active" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 60).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Domain records resolved. You can now use Resend to send up to 50,000 custom emails per month.") : ""
+          }
+        }
+      },
+
+      // SENT (2 messages)
+      {
+        id: "msg_22",
+        threadId: "thread_22",
+        internalDate: Date.now() - 3600000 * 3,
+        labelIds: ["SENT"],
+        snippet: "Hey Alex, I just submitted the dashboard verification plan. The Razorpay components look great and tsc compilation passes.",
+        payload: {
+          headers: [
+            { name: "From", value: "maomao@gmail.com" },
+            { name: "Subject", value: "Re: Neurosync Dashboard Update - Launch Ready!" },
+            { name: "To", value: "alex@neurosync.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 3).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hey Alex,<br/><br/>I just submitted the dashboard verification plan. The Razorpay components look great and tsc compilation passes. Ready to launch!<br/><br/>Best,<br/>Maomao") : ""
+          }
+        }
+      },
+      {
+        id: "msg_23",
+        threadId: "thread_23",
+        internalDate: Date.now() - 3600000 * 20,
+        labelIds: ["SENT"],
+        snippet: "Hi Sarah, please use the green color presets for the buttons in the billing tab to match the landing page. Thanks!",
+        payload: {
+          headers: [
+            { name: "From", value: "maomao@gmail.com" },
+            { name: "Subject", value: "Button Styling in Dashboard" },
+            { name: "To", value: "sarah@neurosync.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 20).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Hi Sarah,<br/><br/>Please use the green color presets for the buttons in the billing tab to match the landing page.<br/><br/>Thanks,<br/>Maomao") : ""
+          }
+        }
+      },
+
+      // SPAM (1 message, 1 unread)
+      {
+        id: "msg_24",
+        threadId: "thread_24",
+        internalDate: Date.now() - 3600000 * 110,
+        labelIds: ["SPAM", "UNREAD"],
+        snippet: "Winner Notification: You have won $10,000,000 in the international promotional lottery sweepstakes. Claim your rewards today.",
+        payload: {
+          headers: [
+            { name: "From", value: "Lottery Sweepstakes <claims@lottery-spam.com>" },
+            { name: "Subject", value: "🚨 WINNER: Claim your prize of $10M" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 110).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Click this link to enter your bank account info to receive the prize transfer.") : ""
+          }
+        }
+      },
+
+      // TRASH (1 message)
+      {
+        id: "msg_25",
+        threadId: "thread_25",
+        internalDate: Date.now() - 3600000 * 95,
+        labelIds: ["TRASH"],
+        snippet: "Old test email payload to check whether the API responses are correctly parsed in development local environment testing.",
+        payload: {
+          headers: [
+            { name: "From", value: "Test Harness <test@localhost>" },
+            { name: "Subject", value: "Test Mail (Dev Environment)" },
+            { name: "To", value: "maomao@gmail.com" },
+            { name: "Date", value: new Date(Date.now() - 3600000 * 95).toISOString() }
+          ],
+          mimeType: "text/html",
+          body: {
+            data: typeof window !== "undefined" ? btoa("Testing 1... 2... 3... This is a development test file helper message.") : ""
+          }
+        }
+      }
+    ];
+  }, []);
+
+  const filteredMockMessages = useMemo(() => {
+    return mockMessages.filter((msg) => {
+      if (activeTab === "starred") return msg.labelIds.includes("STARRED");
+      if (activeTab === "sent") return msg.labelIds.includes("SENT");
+      if (activeTab === "spam") return msg.labelIds.includes("SPAM");
+      if (activeTab === "trash") return msg.labelIds.includes("TRASH");
+      if (activeTab === "inbox") {
+        if (inboxCategory === "primary") return msg.labelIds.includes("CATEGORY_PERSONAL");
+        if (inboxCategory === "promotions") return msg.labelIds.includes("CATEGORY_PROMOTIONS");
+        if (inboxCategory === "social") return msg.labelIds.includes("CATEGORY_SOCIAL");
+        if (inboxCategory === "updates") return msg.labelIds.includes("CATEGORY_UPDATES");
+      }
+      return true;
+    });
+  }, [mockMessages, activeTab, inboxCategory]);
+
+  const messagesQueryReal = api.gmail.listMessages.useInfiniteQuery(
     { maxResults: 15, q: searchQuery || defaultQuery || undefined },
     {
-      enabled: hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab),
+      enabled: mounted && !isDemo && hasGmail && ["inbox", "starred", "sent", "spam", "trash", "overview"].includes(activeTab),
       staleTime: 900000,
       refetchInterval: 30000,
       getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     },
   );
 
-  const labelsQuery = api.gmail.listLabels.useQuery(undefined, {
-    enabled: hasGmail && activeTab === "labels",
+  const messagesQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      pages: [{ messages: filteredMockMessages, nextPageToken: null }]
+    },
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    refetch: () => Promise.resolve(),
+    fetchNextPage: () => {}
+  } : messagesQueryReal) as typeof messagesQueryReal;
+
+  const labelsQueryReal = api.gmail.listLabels.useQuery(undefined, {
+    enabled: mounted && !isDemo && hasGmail && activeTab === "labels",
     staleTime: 900000,
   });
 
-  const categoryCountsQuery = api.gmail.getCategoryCounts.useQuery(undefined, {
-    enabled: hasGmail && activeTab === "inbox",
+  const labelsQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      labels: [
+        { id: "INBOX", name: "INBOX", type: "system" },
+        { id: "STARRED", name: "STARRED", type: "system" },
+        { id: "SENT", name: "SENT", type: "system" },
+        { id: "DRAFT", name: "DRAFT", type: "system" },
+        { id: "SPAM", name: "SPAM", type: "system" },
+        { id: "TRASH", name: "TRASH", type: "system" }
+      ]
+    },
+    refetch: () => Promise.resolve()
+  } : labelsQueryReal) as typeof labelsQueryReal;
+
+  const categoryCountsQueryReal = api.gmail.getCategoryCounts.useQuery(undefined, {
+    enabled: mounted && !isDemo && hasGmail && activeTab === "inbox",
     staleTime: 900000,
     refetchInterval: 5000,
   });
 
+  const categoryCountsQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      "CATEGORY_PERSONAL": 3,
+      "CATEGORY_PROMOTIONS": 2,
+      "CATEGORY_SOCIAL": 2,
+      "CATEGORY_UPDATES": 2
+    },
+    refetch: () => Promise.resolve()
+  } : categoryCountsQueryReal) as typeof categoryCountsQueryReal;
 
-  const overviewStatsQuery = api.gmail.getOverviewStats.useQuery(undefined, {
-    enabled: hasGmail && activeTab === "overview",
+  const overviewStatsQueryReal = api.gmail.getOverviewStats.useQuery(undefined, {
+    enabled: mounted && !isDemo && hasGmail && activeTab === "overview",
     staleTime: 900000,
     refetchInterval: 10000,
   });
 
-  const draftsQuery = api.gmail.listDrafts.useQuery(
+  const overviewStatsQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      inbox: { total: 21, unread: 9 },
+      sent: { total: 2 },
+      drafts: { total: 0 },
+      spam: { total: 1, unread: 1 },
+      trash: { total: 1 },
+      starred: { total: 4 }
+    },
+    refetch: () => Promise.resolve()
+  } : overviewStatsQueryReal) as typeof overviewStatsQueryReal;
+
+  const draftsQueryReal = api.gmail.listDrafts.useQuery(
     { maxResults: 15, q: searchQuery || undefined },
-    { enabled: hasGmail && activeTab === "drafts", staleTime: 900000 },
+    { enabled: mounted && !isDemo && hasGmail && activeTab === "drafts", staleTime: 900000 },
   );
+
+  const draftsQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      drafts: []
+    },
+    refetch: () => Promise.resolve()
+  } : draftsQueryReal) as typeof draftsQueryReal;
 
   const disconnectPlugin = api.gmail.disconnectPlugin.useMutation({
     onMutate: async (variables) => {
@@ -226,6 +826,76 @@ export default function GmailDashboard() {
       toast.error(`Disconnect failed: ${e.message}`);
     }
   });
+
+  const userPlanQueryReal = api.billing.getUserPlan.useQuery(undefined, {
+    enabled: mounted && !isDemo && !!session,
+  });
+
+  const userPlanQuery = isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      role: "admin",
+      plan: "Pro"
+    },
+    refetch: () => Promise.resolve()
+  } as any : userPlanQueryReal;
+
+  const handleUpgradeToPro = async () => {
+    try {
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 19900, currency: "INR" }),
+      });
+
+      const orderData = (await res.json()) as { amount: number; currency: string; order_id: string; error?: string };
+
+      if (!res.ok) {
+        throw new Error(orderData.error || "Failed to create order");
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Neurosync Pro",
+        description: "Upgrade to Pro Plan",
+        order_id: orderData.order_id,
+        handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+          try {
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (!verifyRes.ok) throw new Error("Payment verification failed");
+            
+            toast.success("Payment successful! Welcome to Pro.");
+            await userPlanQuery.refetch();
+          } catch (e: any) {
+            toast.error("Payment verification failed: " + (e.message || "Unknown error"));
+          }
+        },
+        theme: {
+          color: "#1a1a1a",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: { error: { description: string } }) {
+        toast.error("Payment failed: " + response.error.description);
+      });
+      rzp.open();
+    } catch (e: any) {
+      toast.error("Checkout error: " + (e.message || "Unknown error"));
+    }
+  };
 
   // ── Connect Modal State
   const [showConnectModal, setShowConnectModal] = useState(false);
@@ -282,14 +952,124 @@ export default function GmailDashboard() {
     return d.toISOString();
   }, [daysToRender]);
 
-  const calendarQuery = api.calendar.listEvents.useQuery(
+  const calendarQueryReal = api.calendar.listEvents.useQuery(
     { maxResults: 100, q: searchQuery || undefined, timeMin, timeMax },
-    { enabled: hasCalendar && (activeTab === "calendar" || activeTab === "overview"), refetchInterval: 30000, staleTime: 5 * 60 * 1000 },
+    { enabled: mounted && !isDemo && hasCalendar && (activeTab === "calendar" || activeTab === "overview"), refetchInterval: 30000, staleTime: 5 * 60 * 1000 },
   );
 
-  const systemQuotaQuery = api.gmail.getSystemQuota.useQuery(undefined, {
+  const calendarQuery = isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      items: [
+        {
+          id: "evt_1",
+          summary: "🚀 Neurosync Launch Planning",
+          description: "Final alignment meeting to review the dashboard release, Razorpay endpoints, and production checklist.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 2).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 3.5).toISOString() },
+          colorId: "1"
+        },
+        {
+          id: "evt_2",
+          summary: "🍕 Team Sync & Lunch",
+          description: "Social sync and celebration of completing the dashboard implementation plan tasks.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 24).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 25).toISOString() },
+          colorId: "2"
+        },
+        {
+          id: "evt_3",
+          summary: "💼 Client Demo - Dashboard Feedback",
+          description: "Presenting the new Billing sidebar tab and Razorpay flow live to stakeholders.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 48).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 49).toISOString() },
+          colorId: "3"
+        },
+        {
+          id: "evt_4",
+          summary: "📊 Retro & Sprint Planning",
+          description: "Review sprint goals, metrics, velocity, and backlog refinement.",
+          start: { dateTime: new Date(Date.now() - 3600000 * 4).toISOString() },
+          end: { dateTime: new Date(Date.now() - 3600000 * 2.5).toISOString() },
+          colorId: "4"
+        },
+        {
+          id: "evt_5",
+          summary: "🤝 One-on-One with CEO",
+          description: "Weekly sync regarding development progress and budget allocation guidelines.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 26).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 27).toISOString() },
+          colorId: "5"
+        },
+        {
+          id: "evt_6",
+          summary: "📈 Investor Pitch Prep",
+          description: "Review the landing page analytics and the Stripe/Razorpay conversion funnels.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 50).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 51.5).toISOString() },
+          colorId: "6"
+        },
+        {
+          id: "evt_7",
+          summary: "🛠️ Frontend Architecture Review",
+          description: "Deep dive into next-generation rendering presets, loading performance, and styling optimization.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 77).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 79).toISOString() },
+          colorId: "7"
+        },
+        {
+          id: "evt_8",
+          summary: "📢 Weekly Marketing Alignment",
+          description: "Sync on social channels launch plan, Product Hunt tags, and newsletter announcements.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 100).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 101).toISOString() },
+          colorId: "8"
+        },
+        {
+          id: "evt_9",
+          summary: "💾 DB Optimization & Scale Session",
+          description: "Optimize Prisma indexing, check webhook retry strategies, and scale Supabase connection pools.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 123).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 125).toISOString() },
+          colorId: "9"
+        },
+        {
+          id: "evt_10",
+          summary: "❓ Product Q&A & Onboarding",
+          description: "Review the dashboard interface walkthrough with early staging users and address comments.",
+          start: { dateTime: new Date(Date.now() + 3600000 * 148).toISOString() },
+          end: { dateTime: new Date(Date.now() + 3600000 * 149).toISOString() },
+          colorId: "10"
+        }
+      ],
+      authError: null
+    },
+    refetch: () => Promise.resolve()
+  } as any : calendarQueryReal;
+
+  const systemQuotaQueryReal = api.gmail.getSystemQuota.useQuery(undefined, {
+    enabled: mounted && !isDemo,
     refetchInterval: 60000,
   });
+
+  const systemQuotaQuery = isDemo ? {
+    isLoading: false,
+    error: null,
+    data: {
+      storageQuota: {
+        limit: "16106127360",
+        usageInDrive: "5368709120",
+        usageInDriveTrash: "0",
+        usage: "5368709120"
+      },
+      aiTokens: {
+        used: 45000,
+        total: 300000
+      }
+    },
+    refetch: () => Promise.resolve()
+  } as any : systemQuotaQueryReal;
 
   // ── Calendar Grid Logic
   const getLocalDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -395,10 +1175,17 @@ export default function GmailDashboard() {
 
 
 
-  const selectedMessage = api.gmail.getMessage.useQuery(
+  const selectedMessageReal = api.gmail.getMessage.useQuery(
     { id: selectedMessageId! },
-    { enabled: !!selectedMessageId, staleTime: 5 * 60 * 1000 },
+    { enabled: mounted && !isDemo && !!selectedMessageId, staleTime: 5 * 60 * 1000 },
   );
+
+  const selectedMessage = isDemo ? {
+    isLoading: false,
+    error: null,
+    data: mockMessages.find(m => m.id === selectedMessageId),
+    refetch: () => Promise.resolve()
+  } as any : selectedMessageReal;
 
   const sendMutation = api.gmail.sendEmail.useMutation({
     onSuccess: () => {
@@ -502,11 +1289,28 @@ export default function GmailDashboard() {
   const secondaryTabs: { key: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { key: "calendar", label: "Calendar", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> },
     { key: "assistant", label: "AI Agent", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg> },
+    { key: "billing", label: "Billing", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg> },
     { key: "settings", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> },
   ];
 
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("isDemoMode");
+    }
+    if (isDemo) {
+      window.location.href = "/";
+    } else {
+      signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } } }).catch(e => console.error(e));
+    }
+  };
+
   return (
-    <div className="gmail-dashboard">
+    <>
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+      />
+      <div className="gmail-dashboard">
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
         <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px' }}>
@@ -623,7 +1427,7 @@ export default function GmailDashboard() {
               {fullName}
             </span>
           </div>
-          <button onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/'; } } })} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg">
+          <button onClick={handleLogout} style={{ width: '100%', padding: '8px 12px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, transition: 'all 0.2s', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px' }} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg">
             <span style={{ display: 'flex', alignItems: 'center', opacity: 0.8 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </span>
@@ -1072,7 +1876,7 @@ export default function GmailDashboard() {
                             key={msg.id}
                             className={`message-row ${selectedMessageId === msg.id ? 'bg-black/5 dark:bg-white/5 border-l-4 border-l-text-primary' : ''}`}
                             onClick={() => setSelectedMessageId(msg.id!)}
-                            onMouseEnter={() => { if (msg.id) utils.gmail.getMessage.prefetch({ id: msg.id }); }}
+                            onMouseEnter={() => { if (!isDemo && msg.id) utils.gmail.getMessage.prefetch({ id: msg.id }); }}
                             id={`msg-${msg.id}`}
                           >
                             <div className="msg-avatar" style={{ background: avatarColor, color: '#ffffff' }}>
@@ -1098,7 +1902,8 @@ export default function GmailDashboard() {
                         ref={(node) => {
                           if (!node) return;
                           const observer = new IntersectionObserver(entries => {
-                            if (entries[0].isIntersecting && !messagesQuery.isFetchingNextPage) {
+                            const entry = entries[0];
+                            if (entry && entry.isIntersecting && !messagesQuery.isFetchingNextPage) {
                               messagesQuery.fetchNextPage();
                             }
                           }, { rootMargin: '100px' });
@@ -1219,7 +2024,7 @@ export default function GmailDashboard() {
                           const replySubject = originalSubject.startsWith("Re:") ? originalSubject : `Re: ${originalSubject}`;
 
                           const match = originalFrom.match(/<(.+)>/);
-                          const toEmail = match ? match[1] : originalFrom;
+                          const toEmail = (match && match[1]) ? match[1] : originalFrom;
 
                           try {
                             await sendMutation.mutateAsync({
@@ -1931,6 +2736,167 @@ export default function GmailDashboard() {
             </div>
           </section>
         )}
+
+        {/* ── Billing ────────────────────────────── */}
+        {activeTab === "billing" && (
+          <section className="panel" id="panel-billing">
+            <div className="panel-header">
+              <h2 className="panel-title">Billing</h2>
+            </div>
+            <div style={{ padding: '0 24px 24px', margin: '0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {userPlanQuery.isLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', gap: '8px' }}>
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--text-secondary)]" />
+                  <span style={{ color: 'var(--text-secondary)' }}>Loading billing status...</span>
+                </div>
+              ) : userPlanQuery.error ? (
+                <div style={{ padding: '16px', background: 'var(--red-soft)', border: '1px solid var(--red)', borderRadius: '12px', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertTriangle className="w-5 h-5" />
+                  <span>Failed to load billing status: {userPlanQuery.error.message}</span>
+                </div>
+              ) : (
+                <>
+                  {/* Current Plan Overview */}
+                  <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>Plan Overview</h3>
+                      <span style={{
+                        background: userPlanQuery.data?.role === 'admin' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                        color: userPlanQuery.data?.role === 'admin' ? '#10b981' : 'var(--text-secondary)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: '4px 10px',
+                        borderRadius: '9999px',
+                        border: `1px solid ${userPlanQuery.data?.role === 'admin' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.2)'}`,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        {userPlanQuery.data?.role === 'admin' && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }} />}
+                        {userPlanQuery.data?.plan === 'Pro' ? 'Pro Plan Active' : 'Starter/Free Plan'}
+                      </span>
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px', lineHeight: '1.5' }}>
+                      {userPlanQuery.data?.role === 'admin'
+                        ? 'Thank you for upgrading to Pro! You have full access to all AI features, priority support, and advanced options.'
+                        : 'Explore basic AI workflows on our free Starter plan. Upgrade to unlock powerful integrations and unlimited capacity.'}
+                    </p>
+
+                    {/* Features list based on active plan */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '24px' }}>
+                      <div style={{ background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border)', padding: '20px' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Included in Starter</h4>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>✓</span> Smart Email Triage
+                          </li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>✓</span> Basic Calendar Integration
+                          </li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>✓</span> 50 AI queries / month
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '10px',
+                        border: userPlanQuery.data?.role === 'admin' ? '1px solid rgba(132, 204, 22, 0.3)' : '1px solid var(--border)',
+                        padding: '20px',
+                        position: 'relative',
+                        boxShadow: userPlanQuery.data?.role === 'admin' ? 'var(--shadow-glow)' : 'none'
+                      }}>
+                        {userPlanQuery.data?.role === 'admin' && (
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--accent)', color: 'var(--bg-deep)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Current Plan
+                          </div>
+                        )}
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Included in Pro</h4>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: userPlanQuery.data?.role === 'admin' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                            <span style={{ color: '#10b981' }}>✓</span> Unlimited AI Queries
+                          </li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: userPlanQuery.data?.role === 'admin' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                            <span style={{ color: '#10b981' }}>✓</span> Advanced Workflows & Webhooks
+                          </li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: userPlanQuery.data?.role === 'admin' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                            <span style={{ color: '#10b981' }}>✓</span> Priority Support
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Card / Upgrade Action */}
+                  {userPlanQuery.data?.role !== 'admin' && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, var(--bg-elevated) 0%, rgba(132, 204, 22, 0.05) 100%)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(132, 204, 22, 0.15)',
+                      padding: '32px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)', fontSize: '18px', fontWeight: 700 }}>Upgrade to Neurosync Pro</h3>
+                        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '13px', maxWidth: '450px', lineHeight: '1.5' }}>
+                          Unlock absolute power with unlimited AI queries, lightning-fast response times, and customizable automation triggers.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                          <span style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)' }}>₹199</span>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 }}>/ month</span>
+                        </div>
+                        <button
+                          onClick={handleUpgradeToPro}
+                          style={{
+                            background: 'var(--text-primary)',
+                            color: 'var(--bg-deep)',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: 'var(--shadow-md)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          className="hover:scale-[1.02]"
+                        >
+                          <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
+                          Upgrade Now
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {userPlanQuery.data?.role === 'admin' && (
+                    <div style={{
+                      background: 'var(--bg-elevated)',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border)',
+                      padding: '24px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}>
+                      <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '14px', fontWeight: 600 }}>Billing Support</h4>
+                      <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '13px', lineHeight: '1.5' }}>
+                        Your subscription is processed via Razorpay. For cancellations, refunds, or changing payment methods, please reach out to our team at support@neurosync.com.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* ── Event Modal ──────────────────────────────── */}
@@ -2037,5 +3003,6 @@ export default function GmailDashboard() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -10,8 +10,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area"; // We might not have this, we can just use native scroll
+} from "@/components/ui/popover"; // We might not have this, we can just use native scroll
 
 export function DateTimePicker({
   value,
@@ -108,7 +107,6 @@ export function DateTimePicker({
             mode="single"
             selected={date}
             onSelect={handleSelect}
-            initialFocus
             className="p-3"
           />
           <div className="p-3 flex flex-col justify-center items-center bg-gray-50 dark:bg-zinc-900/50">

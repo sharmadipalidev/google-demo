@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { api } from "@/trpc/react";
 import { Loader2 } from "lucide-react";
 
@@ -7,10 +7,43 @@ export function EmailActivityChart() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const activityQuery = api.gmail.getEmailActivity.useQuery(undefined, {
+  const [isDemo, setIsDemo] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsDemo(localStorage.getItem("isDemoMode") === "true");
+    }
+  }, []);
+
+  const mockActivityData = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: 14 }).map((_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (13 - i));
+      const counts = [12, 18, 5, 22, 14, 9, 15, 20, 11, 16, 7, 24, 19, 15];
+      return {
+        date: d.toISOString(),
+        count: counts[i] || 10
+      };
+    });
+  }, []);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activityQueryReal = api.gmail.getEmailActivity.useQuery(undefined, {
+    enabled: mounted && !isDemo,
     staleTime: 5 * 60 * 1000,
   });
-  
+
+  const activityQuery = (isDemo ? {
+    isLoading: false,
+    error: null,
+    data: mockActivityData,
+    refetch: () => Promise.resolve()
+  } : activityQueryReal) as typeof activityQueryReal;
+
   useEffect(() => {
     if (activityQuery.data) {
       const processedData = activityQuery.data.map((item, index, arr) => {
