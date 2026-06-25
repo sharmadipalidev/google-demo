@@ -3,9 +3,13 @@ import Razorpay from "razorpay";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
+import { cookies } from "next/headers";
+
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: req.headers });
-  if (!session?.user) {
+  const isDemoMode = cookies().get("isDemoMode")?.value === "true";
+
+  if (!session?.user && !isDemoMode) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
