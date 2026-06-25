@@ -72,7 +72,7 @@ export default function Navbar() {
                   document.cookie = "isDemoMode=true; path=/; max-age=86400";
                   window.location.href = "/gmail";
                 }}
-                className="cursor-pointer bg-[#84cc16] hover:bg-[#a3e635] text-white border-0 shadow-[0_2px_10px_rgba(132,204,22,0.2)] px-6 py-2.5 rounded-full text-sm font-semibold hover:scale-105 transition-all duration-300 flex items-center gap-1"
+                className="cursor-pointer bg-black text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-black/80 hover:scale-105 shadow-lg transition-all duration-300 flex items-center gap-1"
               >
                 Demo Login
               </button>
@@ -146,7 +146,7 @@ export default function Navbar() {
                       document.cookie = "isDemoMode=true; path=/; max-age=86400";
                       window.location.href = "/gmail";
                     }}
-                    className="cursor-pointer bg-[#84cc16] hover:bg-[#a3e635] text-white border-0 shadow-[0_2px_10px_rgba(132,204,22,0.2)] px-5 py-3 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 w-full"
+                    className="cursor-pointer bg-black text-white px-5 py-3 rounded-full text-lg font-semibold hover:bg-black/80 hover:scale-105 shadow-lg transition-all duration-300 flex items-center justify-center gap-2 w-full"
                   >
                     Demo Login
                   </button>
