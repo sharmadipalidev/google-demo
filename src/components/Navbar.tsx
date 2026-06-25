@@ -69,6 +69,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   localStorage.setItem("isDemoMode", "true");
+                  document.cookie = "isDemoMode=true; path=/; max-age=86400";
                   window.location.href = "/gmail";
                 }}
                 className="cursor-pointer bg-[#84cc16] hover:bg-[#a3e635] text-white border-0 shadow-[0_2px_10px_rgba(132,204,22,0.2)] px-6 py-2.5 rounded-full text-sm font-semibold hover:scale-105 transition-all duration-300 flex items-center gap-1"
@@ -78,6 +79,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   localStorage.removeItem("isDemoMode");
+                  document.cookie = "isDemoMode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
                   signIn.social({ provider: 'google', callbackURL: '/gmail' });
                 }}
                 className="cursor-pointer bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/80 hover:scale-105 hover:shadow-lg transition-all duration-300 flex items-center gap-1"
@@ -141,6 +143,7 @@ export default function Navbar() {
                     onClick={() => {
                       setIsOpen(false);
                       localStorage.setItem("isDemoMode", "true");
+                      document.cookie = "isDemoMode=true; path=/; max-age=86400";
                       window.location.href = "/gmail";
                     }}
                     className="cursor-pointer bg-[#84cc16] hover:bg-[#a3e635] text-white border-0 shadow-[0_2px_10px_rgba(132,204,22,0.2)] px-5 py-3 rounded-full text-lg font-semibold hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 w-full"
@@ -151,6 +154,7 @@ export default function Navbar() {
                     onClick={() => {
                       setIsOpen(false);
                       localStorage.removeItem("isDemoMode");
+                      document.cookie = "isDemoMode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
                       signIn.social({ provider: 'google', callbackURL: '/gmail' });
                     }}
                     className="cursor-pointer bg-white/40 backdrop-blur-lg border border-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-[#1a1a1a] px-5 py-3 rounded-full text-lg font-semibold hover:bg-white/80 hover:scale-105 hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 w-full"

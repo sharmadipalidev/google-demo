@@ -1130,18 +1130,29 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
   flex: 1;
-  background: var(--border);
-  gap: 1px;
-  /* border hack */
+  background: transparent;
 }
 
 .calendar-cell {
   background: var(--bg-card);
   min-height: 120px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   transition: background var(--transition-fast);
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-cell:nth-last-child(-n+7) {
+  border-bottom: none;
 }
 
 .calendar-cell:hover:not(.empty) {
@@ -1154,17 +1165,17 @@
 }
 
 .calendar-cell-header {
-  padding: 8px;
+  padding: 4px 8px 2px;
   display: flex;
   justify-content: flex-end;
 }
 
 .calendar-day-number {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1178,7 +1189,7 @@
 
 .calendar-events-container {
   flex: 1;
-  padding: 0 4px 8px;
+  padding: 0 4px 2px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1205,15 +1216,19 @@
   color: var(--accent);
   border: 1px solid var(--border-focus);
   border-radius: 4px;
-  padding: 4px 6px;
+  padding: 2px 6px;
   font-size: 11px;
   font-weight: 600;
   display: flex;
   gap: 6px;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   overflow: hidden;
   transition: all var(--transition-fast);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-event-time {
@@ -1222,8 +1237,15 @@
 }
 
 .calendar-event-title {
+  min-width: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* ── Event Modal ────────────────────────────────────── */

@@ -367,7 +367,7 @@ export const gmailRouter = createTRPCRouter({
   sendEmail: protectedProcedure
     .input(
       z.object({
-        to: z.string().email(),
+        to: z.string().trim().email(),
         subject: z.string(),
         body: z.string(),
         threadId: z.string().optional(),

@@ -10,10 +10,13 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { auth } from "@/lib/auth";
+import crypto from "crypto";
 
 import { db } from "@/server/db";
 import { corsair } from "@/server/corsair";
 import { setupCorsair } from "corsair";
+import { user } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 
 // Cache of provisioned tenant IDs to avoid calling setupCorsair on every request
 const provisionedTenants = new Set<string>();
@@ -32,7 +35,41 @@ const provisionedTenants = new Set<string>();
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({ headers: opts.headers });
-  const userId = session?.user?.id;
+  let userId = session?.user?.id;
+
+  const cookies = opts.headers.get("cookie") || "";
+  const isDemoCookie = cookies.includes("isDemoMode=true");
+  
+  console.log("[TRPC Context] Incoming headers x-demo-mode:", opts.headers.get("x-demo-mode"));
+  console.log("[TRPC Context] isDemoCookie:", isDemoCookie);
+
+  if (!userId && (opts.headers.get("x-demo-mode") === "true" || isDemoCookie)) {
+    console.log("[TRPC Context] Entering demo mode fallback");
+    let demoUser = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, "mukumaomao@gmail.com"))
+      .limit(1)
+      .then(rows => rows[0]);
+
+    // Auto-create the demo user if they don't exist in the database
+    if (!demoUser) {
+      const newId = crypto.randomUUID();
+      console.log("[TRPC Context] Demo user not found, auto-creating with id:", newId);
+      await db.insert(user).values({
+        id: newId,
+        name: "maomao",
+        email: "mukumaomao@gmail.com",
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      demoUser = { id: newId };
+    }
+
+    userId = demoUser.id;
+    console.log("[TRPC Context] Demo Mode fallback to userId:", userId);
+  }
 
   if (!userId) {
     const cookie = opts.headers.get("cookie");

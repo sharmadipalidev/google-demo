@@ -53,8 +53,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           transformer: SuperJSON,
           url: getBaseUrl() + "/api/trpc",
           headers: () => {
-            const headers = new Headers();
-            headers.set("x-trpc-source", "nextjs-react");
+            const headers: Record<string, string> = {
+              "x-trpc-source": "nextjs-react",
+            };
+            if (typeof window !== "undefined" && localStorage.getItem("isDemoMode") === "true") {
+              headers["x-demo-mode"] = "true";
+            }
             return headers;
           },
         }),
