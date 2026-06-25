@@ -22,7 +22,7 @@ interface ChatSession {
   updatedAt: number;
 }
 
-export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) {
+export function AssistantPanel({ userInitial = "U", isDemo = false }: { userInitial?: string, isDemo?: boolean }) {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(' ')[0] || "there";
   
@@ -183,36 +183,37 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
         className="relative max-w-3xl mx-auto"
         onSubmit={(e) => {
           e.preventDefault();
-          if (canSubmit && !runPrompt.isPending) {
+          if (canSubmit && !runPrompt.isPending && !isDemo) {
             setMessages(prev => [...prev, { role: "user", content: prompt }]);
             runPrompt.mutate({ prompt, history: messages });
             setPrompt("");
           }
         }}
       >
-        <div className={`relative flex items-center rounded-full border bg-transparent px-3 py-2 transition-all ${isListening ? 'border-[#1a1a1a] dark:border-white ring-1 ring-[#1a1a1a] dark:ring-white' : 'border-[#1a1a1a] dark:border-white focus-within:ring-1 focus-within:ring-[#1a1a1a] dark:focus-within:ring-white'}`}>
+        <div className={`relative flex items-center rounded-full border bg-transparent px-3 py-2 transition-all ${isListening ? 'border-[#1a1a1a] dark:border-white ring-1 ring-[#1a1a1a] dark:ring-white' : 'border-[#1a1a1a] dark:border-white focus-within:ring-1 focus-within:ring-[#1a1a1a] dark:focus-within:ring-white'} ${isDemo ? 'opacity-60 pointer-events-none bg-gray-50 dark:bg-zinc-900/50' : ''}`}>
           <input
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value.slice(0, 500))}
-            placeholder={isListening ? "Listening..." : "Type a command or ask a question..."}
+            placeholder={isDemo ? "AI Assistant is disabled in Demo Login" : (isListening ? "Listening..." : "Type a command or ask a question...")}
             className="w-full bg-transparent px-4 py-2 text-sm text-[#1a1a1a] dark:text-white placeholder:text-[#5e5e5e] focus:outline-none"
-            disabled={runPrompt.isPending}
-            autoFocus
+            disabled={runPrompt.isPending || isDemo}
+            autoFocus={!isDemo}
           />
 
           <div className="flex items-center gap-2 pr-1">
             <button
               type="button"
               onClick={toggleListening}
-              className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${isListening ? 'bg-black/10 dark:bg-white/20 text-[#1a1a1a] dark:text-white animate-pulse' : 'text-[#8e8e8e] hover:text-[#1a1a1a] dark:hover:text-white'}`}
+              disabled={isDemo}
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${isListening ? 'bg-black/10 dark:bg-white/20 text-[#1a1a1a] dark:text-white animate-pulse' : 'text-[#8e8e8e] hover:text-[#1a1a1a] dark:hover:text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <Mic className="w-4 h-4" />
             </button>
             <button
               type="submit"
-              disabled={!canSubmit || runPrompt.isPending}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] transition-all hover:bg-black dark:hover:bg-gray-200 disabled:opacity-50"
+              disabled={!canSubmit || runPrompt.isPending || isDemo}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] transition-all hover:bg-black dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {runPrompt.isPending ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 dark:border-[#1a1a1a]/20 border-t-white dark:border-t-[#1a1a1a]" />
@@ -266,9 +267,18 @@ export function AssistantPanel({ userInitial = "U" }: { userInitial?: string }) 
             </button>
           </div>
         </div>
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: isDemo ? '16px' : '24px' }}>
           Ask neurosync to summarize threads, schedule meetings, draft replies, or organize your inbox securely.
         </p>
+        {isDemo && (
+          <div className="mb-6 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-200 text-sm flex items-center gap-3 shadow-sm">
+            <span className="text-lg">⚠️</span> 
+            <div>
+              <strong className="font-semibold block mb-0.5">AI is Disabled</strong>
+              <span className="opacity-90">The AI assistant features are temporarily disabled while in Demo Login. Please log in normally to use them.</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Center Content Area ── */}

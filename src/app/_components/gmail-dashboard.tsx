@@ -2383,7 +2383,7 @@ export default function GmailDashboard() {
           {/* ── AI Assistant ───────────────────────────── */}
           {activeTab === "assistant" && (
             <section className="panel" id="panel-assistant" style={{ padding: 0, overflow: 'hidden', margin: '-28px -32px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-              <AssistantPanel userInitial={avatarInitials} />
+              <AssistantPanel userInitial={avatarInitials} isDemo={isDemo} />
             </section>
           )}
 
@@ -2532,10 +2532,20 @@ export default function GmailDashboard() {
                   <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>AI Assistant</h3>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Configure how your AI agent behaves.</p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
+                  {isDemo && (
+                    <div className="mb-6 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-200 text-sm flex items-center gap-3 shadow-sm">
+                      <span className="text-lg">⚠️</span> 
+                      <div>
+                        <strong className="font-semibold block mb-0.5">AI Agent is Disabled</strong>
+                        <span className="opacity-90">AI agent settings are temporarily disabled while in Demo Login. Please log in normally to configure them.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px', opacity: isDemo ? 0.6 : 1, pointerEvents: isDemo ? 'none' : 'auto' }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
                       <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Default Action</label>
-                      <Select defaultValue="draft">
+                      <Select defaultValue="draft" disabled={isDemo}>
                         <SelectTrigger className="w-full bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-primary)]">
                           <SelectValue placeholder="Select an action" />
                         </SelectTrigger>
